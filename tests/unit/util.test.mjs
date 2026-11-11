@@ -65,3 +65,16 @@ test("debounce supports a leading call", async () => {
   await new Promise((resolve) => setTimeout(resolve, 25));
   assert.equal(calls, 1);
 });
+
+test("debounce.flush runs a pending call immediately", () => {
+  let last = null;
+  const fn = debounce((value) => {
+    last = value;
+  }, 1000);
+  fn("pending");
+  assert.equal(last, null);
+  fn.flush();
+  assert.equal(last, "pending");
+  fn.flush();
+  assert.equal(last, "pending");
+});

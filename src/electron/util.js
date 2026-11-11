@@ -44,6 +44,17 @@ function debounce(fn, wait, options = {}) {
     lastArgs = null;
   };
 
+  /** Runs a pending trailing call immediately. */
+  debounced.flush = () => {
+    if (timer !== null && lastArgs) {
+      clearTimeout(timer);
+      const args = lastArgs;
+      timer = null;
+      lastArgs = null;
+      fn(...args);
+    }
+  };
+
   return debounced;
 }
 
