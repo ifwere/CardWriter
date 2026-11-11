@@ -1,0 +1,54 @@
+name: Build macOS (Intel)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # Intel (x86_64) macOS runner. The produced app targets macOS 12+.
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Cache Elm home
+        uses: actions/cache@v4
+        with:
+          path: ~/.elm
+          key: elm-${{ runner.os }}-${{ hashFiles('elm.json') }}
+          restore-keys: |
+            elm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Checks and unit tests
+        run: |
+          npm run check
+          npm test
+
+      - name: Build application
+        run: npm run build
+
+      # Unsigned, unnotarized x64 dmg + zip.
+      - name: Package for macOS
+        run: npx electron-builder --mac --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CardWriter-macos-x64
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: error

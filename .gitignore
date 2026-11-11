@@ -1,0 +1,11 @@
+node_modules/
+app/
+dist/
+release/
+test-results/
+playwright-report/
+.elm/
+elm-stuff/
+*.log
+*.swp
+.DS_Store

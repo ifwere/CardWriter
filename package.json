@@ -1,0 +1,95 @@
+{
+  "name": "cardwriter",
+  "productName": "CardWriter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tree-based long-form writing app for macOS (Electron port of the Gingko Writer client).",
+  "license": "MIT",
+  "author": "CardWriter",
+  "main": "app/main.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "npm run build && electron .",
+    "dist:mac": "npm run build && electron-builder --mac --x64",
+    "test": "node --test",
+    "test:e2e": "playwright test",
+    "check": "node scripts/check.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "electron": "^32.0.0",
+    "electron-builder": "^25.1.8",
+    "elm": "0.19.1-6",
+    "esbuild": "^0.24.0",
+    "gsap": "^3.12.5",
+    "lodash": "^4.17.21",
+    "mousetrap": "^1.6.5"
+  },
+  "build": {
+    "appId": "com.cardwriter.desktop",
+    "productName": "CardWriter",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "app/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "src/bin/mac",
+        "to": "bin"
+      }
+    ],
+    "fileAssociations": [
+      {
+        "ext": "gkw",
+        "name": "CardWriter Document",
+        "mimeType": "application/vnd.cardwriter.tree-document",
+        "role": "Editor"
+      },
+      {
+        "ext": "gko",
+        "name": "Gingko Legacy Document",
+        "mimeType": "application/vnd.gingko.tree-document",
+        "role": "Editor"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "minimumSystemVersion": "12.0",
+      "hardenedRuntime": false,
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "sign": false,
+      "contents": [
+        {
+          "x": 110,
+          "y": 150
+        },
+        {
+          "x": 240,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  }
+}
