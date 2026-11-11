@@ -728,6 +728,12 @@ ipcMain.on("copy-support-email", (event, isUrgent) => {
   clipboard.writeText(isUrgent ? config.SUPPORT_URGENT_EMAIL : config.SUPPORT_EMAIL);
 });
 
+ipcMain.on("open-external", (event, url) => {
+  if (typeof url === "string" && /^(https?:|mailto:)/i.test(url)) {
+    void shell.openExternal(url);
+  }
+});
+
 /* ================= External navigation ================= */
 
 app.on("web-contents-created", (event, webContents) => {

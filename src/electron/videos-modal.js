@@ -2,4 +2,4 @@
 
 const Elm = window.Elm;
 
-Elm.Electron.VideosModal.init();
+Elm.Electron.VideosModal.init({ flags: { language: "en" } });

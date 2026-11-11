@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   copyText: (text) => ipcRenderer.send("copy-text", text),
   readClipboard: () => ipcRenderer.invoke("read-clipboard"),
   copySupportEmail: (isUrgent) => ipcRenderer.send("copy-support-email", isUrgent),
+  openExternal: (url) => ipcRenderer.send("open-external", url),
 
   /* Generic escape hatch used by a couple of Elm interop helpers */
   toMain: (channel, ...args) => ipcRenderer.send(channel, ...args)
