@@ -1,4 +1,4 @@
-port module Doc.List exposing (Model(..), current, documentListChanged, filter, fromList, getLastUpdated, init, isLoading, subscribe, switchListSort, toList, update, viewSidebarList, viewSwitcher)
+port module Doc.List exposing (Model(..), current, filter, getLastUpdated, init, isLoading, subscribe, switchListSort, toList, update, viewSidebarList, viewSwitcher)
 
 import Ant.Icons.Svg as AntIcons
 import Doc.Metadata as Metadata exposing (Metadata)
@@ -8,7 +8,7 @@ import Html.Events exposing (onClick, onInput, onMouseEnter, onMouseLeave, stopP
 import Json.Decode as Dec
 import Page.Doc.ContextMenu as ContextMenu
 import Route
-import Svg.Attributes as SA
+import Svg.Attributes
 import Time
 import Translation exposing (TranslationId(..), timeDistInWords, tr)
 import Types exposing (SortBy(..), TooltipPosition(..))
@@ -127,11 +127,6 @@ toList model =
             Nothing
 
 
-fromList : List Metadata -> Model
-fromList docs =
-    Success docs
-
-
 
 -- UPDATE
 
@@ -179,7 +174,6 @@ viewSidebarList msgs currentDocId sortCriteria contextTarget_ filterField model 
                     [ ( "sidebar-document-item", True )
                     , ( "active", itemDocId == currentDocId )
                     , ( "context-target", Just itemDocId == contextTarget_ )
-                    , ( "relative", not <| List.isEmpty (Metadata.getCollaborators d) )
                     ]
                 ]
                 [ a
@@ -189,17 +183,6 @@ viewSidebarList msgs currentDocId sortCriteria contextTarget_ filterField model 
                     , attribute "data-private" "lipsum"
                     ]
                     [ Metadata.getDocName d |> Maybe.withDefault "Untitled" |> text ]
-                , if not <| List.isEmpty (Metadata.getCollaborators d) then
-                    AntIcons.shareAltOutlined
-                        [ SA.class "absolute"
-                        , SA.class "right-2"
-                        , SA.class "top-2"
-                        , SA.class "w-3"
-                        , SA.class "pointer-events-none"
-                        ]
-
-                  else
-                    text ""
                 ]
     in
     case filter filterField model of
@@ -227,7 +210,7 @@ viewSidebarList msgs currentDocId sortCriteria contextTarget_ filterField model 
                         , onMouseEnter <| msgs.tooltipRequested "sort-modified" AboveTooltip SortByLastModified
                         , onMouseLeave msgs.tooltipClosed
                         ]
-                        [ AntIcons.editOutlined [ SA.class "sort-icon" ] ]
+                        [ AntIcons.editOutlined [ Svg.Attributes.class "sort-icon" ] ]
                     , div
                         [ id "sort-created"
                         , class "sort-button"
@@ -236,7 +219,7 @@ viewSidebarList msgs currentDocId sortCriteria contextTarget_ filterField model 
                         , onMouseEnter <| msgs.tooltipRequested "sort-created" AboveTooltip SortByDateCreated
                         , onMouseLeave msgs.tooltipClosed
                         ]
-                        [ AntIcons.fileOutlined [ SA.class "sort-icon" ] ]
+                        [ AntIcons.fileOutlined [ Svg.Attributes.class "sort-icon" ] ]
                     ]
                 , input [ id "document-list-filter", placeholder "Find file by name", type_ "search", onInput msgs.filter, stopClickProp ] []
                 , div [ id "sidebar-document-list" ]

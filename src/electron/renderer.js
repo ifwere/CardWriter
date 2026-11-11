@@ -1,114 +1,133 @@
-"use strict";
-
-// The Elm bundle is loaded by renderer.html into the page scope.
 const Elm = window.Elm;
 const Mousetrap = require("mousetrap");
 const helpers = require("../shared/doc-helpers");
 
+// Init Vars
+
+window.elmMessages = [];
 let lastActivesScrolled = null;
 let lastColumnScrolled = null;
 let ticking = false;
-let DIRTY = true;
-let isUntitled = true;
+let DIRTY
+let isUntitled
+const localStore =
+  {
+    isReady: () => { return true },
+    set: (key, value) => {
+      window.electronAPI.localStoreSet(key, value)
+    }
+  }
+
+// Init Elm
 let gingkoElectron;
 
-window.elmMessages = [];
+const init = async function (filePath, fileData, fileSettings, undoData, isUntitled) {
+  let timestamp = Date.now();
+  let globalData =
+    { seed : timestamp
+    , currentTime : timestamp
+    , isMac : false
+    };
+  gingkoElectron = Elm.Electron.Electron.init({ flags: { filePath, fileData, fileSettings, undoData, globalData, isUntitled } })
 
-const localStore = {
-  isReady: () => true,
-  set: (key, value) => {
-    window.electronAPI.localStoreSet(key, value);
-  }
-};
-
-function init(filePath, fileData, fileSettings, undoData, isUntitledFlag) {
-  const timestamp = Date.now();
-  const globalData = {
-    seed: timestamp,
-    currentTime: timestamp,
-    isMac: window.electronAPI.platform === "darwin"
-  };
-
-  gingkoElectron = Elm.Electron.Electron.init({
-    flags: { filePath, fileData, fileSettings, undoData, globalData, isUntitled: isUntitledFlag }
-  });
-
-  gingkoElectron.ports.infoForOutside.subscribe((elmdata) => {
+  gingkoElectron.ports.infoForOutside.subscribe(function (elmdata) {
     fromElm(elmdata.tag, elmdata.data);
   });
-}
+};
 
-window.electronAPI.fileReceived(async (event, data) => {
-  DIRTY = data.fileData === null;
-  isUntitled = data.isUntitled;
-  init(data.filePath, data.fileData, data.fileSettings, data.undoData, data.isUntitled);
-});
+window.electronAPI.fileReceived(async (event, d) => {
+  if (d.fileData !== null) {
+    DIRTY = false
+  } else {
+    DIRTY = true
+  }
+  isUntitled = d.isUntitled
+  await init(d.filePath, d.fileData, d.fileSettings, d.undoData, d.isUntitled)
+})
 
 window.electronAPI.fileSaved((event, data) => {
-  DIRTY = false;
-  isUntitled = data[2];
-  toElm(data.slice(0, 2), "docMsgs", "SavedToFile");
-});
+  DIRTY = false
+  isUntitled = data[2]
+  toElm(data.slice(0, 2), 'docMsgs', 'SavedToFile')
+})
 
 window.electronAPI.commitDataResult((event, data) => {
-  toElm(data, "docMsgs", "DataSaved");
-});
+  toElm(data, 'docMsgs', 'DataSaved')
+})
 
-window.electronAPI.clickedExport(() => toElm(null, "docMsgs", "ClickedExport"));
-window.electronAPI.clickedUndo(() => toElm("mod+z", "docMsgs", "Keyboard"));
-window.electronAPI.clickedCut(() => toElm("mod+x", "docMsgs", "Keyboard"));
-window.electronAPI.clickedCopy(() => toElm("mod+c", "docMsgs", "Keyboard"));
-window.electronAPI.clickedPaste(() => toElm("mod+v", "docMsgs", "Keyboard"));
-window.electronAPI.clickedPasteInto(() => toElm("mod+shift+v", "docMsgs", "Keyboard"));
+window.electronAPI.clickedExport((event) => {
+  toElm(null, 'docMsgs', 'ClickedExport')
+})
+
+window.electronAPI.clickedUndo((event) => {
+  toElm('mod+z', 'docMsgs', 'Keyboard')
+})
+
+window.electronAPI.clickedCut((event) => {
+  toElm('mod+x', 'docMsgs', 'Keyboard')
+})
+
+window.electronAPI.clickedCopy((event) => {
+  toElm('mod+c', 'docMsgs', 'Keyboard')
+})
+
+window.electronAPI.clickedPaste((event) => {
+  toElm('mod+v', 'docMsgs', 'Keyboard')
+})
+
+window.electronAPI.clickedPasteInto((event) => {
+  toElm('mod+shift+v', 'docMsgs', 'Keyboard')
+})
 
 window.checkboxClicked = (cardId, number) => {
-  toElm([cardId, number], "docMsgs", "CheckboxClicked");
-};
+  toElm([cardId, number], 'docMsgs', 'CheckboxClicked')
+}
 
 window.onbeforeunload = (e) => {
   if (isUntitled) {
-    window.electronAPI.maybeCloseWindow();
-    e.returnValue = false;
+    window.electronAPI.maybeCloseWindow()
+    e.returnValue = false
   } else if (DIRTY) {
-    setTimeout(window.electronAPI.closeWindow, 200);
-    e.returnValue = false;
+    setTimeout(window.electronAPI.closeWindow, 200)
+    e.returnValue = false
   }
-};
+}
 
 /* === Elm / JS Interop === */
 
-function fromElm(msg, elmData) {
-  window.elmMessages.push({ tag: msg, data: elmData });
-  window.elmMessages = window.elmMessages.slice(-10);
+const fromElm = (msg, elmData) => {
+  window.elmMessages.push({ tag: msg, data: elmData })
+  window.elmMessages = window.elmMessages.slice(-10)
 
   const casesElectron = {
     SetDirty: () => {
-      DIRTY = elmData;
+      DIRTY = elmData
     },
 
     CommitData: () => {
-      window.electronAPI.commitData(elmData);
+      window.electronAPI.commitData(elmData)
     },
 
     DragStart: () => {
-      const cardElement = elmData.target.parentElement;
-      const cardId = cardElement.id.replace(/^card-/, "");
-      elmData.dataTransfer.setDragImage(cardElement, 0, 0);
-      elmData.dataTransfer.setData("text", "");
-      toElm(cardId, "docMsgs", "DragStarted");
+      const cardElement = elmData.target.parentElement
+      const cardId = cardElement.id.replace(/^card-/, '')
+      elmData.dataTransfer.setDragImage(cardElement, 0, 0)
+      elmData.dataTransfer.setData('text', '')
+      toElm(cardId, 'docMsgs', 'DragStarted')
     },
 
     ExportToFile: () => {
-      window.electronAPI.exportFile(elmData);
+      window.electronAPI.exportFile(elmData)
     },
 
     SaveToFile: () => {
-      window.electronAPI.saveFile(elmData);
+      window.electronAPI.saveFile(elmData)
     }
-  };
+  }
 
-  const params = { localStore, lastColumnScrolled, lastActivesScrolled, ticking, DIRTY };
-  const cases = Object.assign(helpers.casesShared(elmData, params), casesElectron);
+  const params = { localStore, lastColumnScrolled, lastActivesScrolled, ticking, DIRTY }
+
+  const cases = Object.assign(helpers.casesShared(elmData, params), casesElectron)
 
   try {
     cases[msg]();
@@ -117,53 +136,63 @@ function fromElm(msg, elmData) {
   }
 }
 
-function toElm(data, portName, tagName) {
-  const portExists = Object.prototype.hasOwnProperty.call(gingkoElectron.ports, portName);
-  const tagGiven = typeof tagName === "string";
+function toElm (data, portName, tagName) {
+  toElm.toMain = window.electronAPI.toMain
+  const portExists = Object.prototype.hasOwnProperty.call(gingkoElectron.ports, portName)
+  const tagGiven = typeof tagName === 'string'
 
   if (portExists) {
-    const dataToSend = tagGiven ? { tag: tagName, data } : data;
-    gingkoElectron.ports[portName].send(dataToSend);
+    var dataToSend
+
+    if (tagGiven) {
+      dataToSend = { tag: tagName, data: data }
+    } else {
+      dataToSend = data
+    }
+    gingkoElectron.ports[portName].send(dataToSend)
   } else {
-    console.error("Unknown port", portName, data);
+    console.error('Unknown port', portName, data)
   }
 }
 
 /* === Keyboard === */
 
-const desktopShortcuts = helpers.shortcuts.filter((x) => x !== "mod+s" && x !== "mod+o");
+const desktopShortcuts = helpers.shortcuts
+  .filter((x) => x !== 'mod+s' && x !== 'mod+o')
 
 Mousetrap.bind(desktopShortcuts, function (e, s) {
   switch (s) {
     case "enter":
-      if (document.activeElement.nodeName === "TEXTAREA") {
+      if (document.activeElement.nodeName == "TEXTAREA") {
         return;
+      } else {
+        toElm("enter","docMsgs", "Keyboard");
       }
-      toElm("enter", "docMsgs", "Keyboard");
       break;
 
-    case "mod+c": {
-      const exportPreview = document.getElementById("export-preview");
-      if (exportPreview !== null) return;
-      toElm("mod+c", "docMsgs", "Keyboard");
+    case "mod+c":
+      let exportPreview = document.getElementById("export-preview");
+      if (exportPreview !== null) {
+        return;
+      } else {
+        toElm("mod+c","docMsgs", "Keyboard");
+      }
       break;
-    }
 
     case "mod+v":
-    case "mod+shift+v": {
-      const elmTag = s === "mod+v" ? "Paste" : "PasteInto";
-      window.electronAPI
-        .readClipboard()
-        .then((clipString) => {
+    case "mod+shift+v":
+      let elmTag = s === "mod+v" ? "Paste" : "PasteInto";
+
+      window.electronAPI.readClipboard()
+        .then(clipString => {
           try {
-            toElm(JSON.parse(clipString), "docMsgs", elmTag);
+            let clipObj = JSON.parse(clipString);
+            toElm(clipObj, "docMsgs", elmTag)
           } catch {
-            toElm(clipString, "docMsgs", elmTag);
+            toElm(clipString, "docMsgs", elmTag)
           }
-        })
-        .catch((err) => console.error("clipboard read failed", err));
+        });
       break;
-    }
 
     case "alt+0":
     case "alt+1":
@@ -171,24 +200,22 @@ Mousetrap.bind(desktopShortcuts, function (e, s) {
     case "alt+3":
     case "alt+4":
     case "alt+5":
-    case "alt+6": {
-      if (document.activeElement.nodeName === "TEXTAREA") {
-        const num = Number(s[s.length - 1]);
-        const currentText = document.activeElement.value;
-        const newText = currentText.replace(
-          /^(#{0,6}) ?(.*)/,
-          num === 0 ? "$2" : "#".repeat(num) + " $2"
-        );
+    case "alt+6":
+      if (document.activeElement.nodeName == "TEXTAREA") {
+        let num = Number(s[s.length - 1]);
+        let currentText = document.activeElement.value;
+        let newText = currentText.replace(/^(#{0,6}) ?(.*)/, num === 0 ? '$2' : '#'.repeat(num) + ' $2');
         document.activeElement.value = newText;
         DIRTY = true;
         toElm(newText, "docMsgs", "FieldChanged");
 
-        const cardElementId = document.activeElement.id.replace(/^card-edit/, "card");
-        const card = document.getElementById(cardElementId);
-        if (card !== null) card.dataset.clonedContent = newText;
+        let cardElementId = document.activeElement.id.replace(/^card-edit/, "card");
+        let card = document.getElementById(cardElementId);
+        if (card !== null) {
+          card.dataset.clonedContent = newText;
+        }
       }
       break;
-    }
 
     default:
       toElm(s, "docMsgs", "Keyboard");
@@ -201,5 +228,6 @@ Mousetrap.bind(desktopShortcuts, function (e, s) {
 
 /* === DOM manipulation === */
 
-const observer = helpers.getObserver(toElm);
-observer.observe(document.body, { childList: true, subtree: true });
+const observer = helpers.getObserver(toElm)
+const observerConfig = { childList: true, subtree: true }
+observer.observe(document.body, observerConfig)

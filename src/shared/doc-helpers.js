@@ -1,5 +1,5 @@
 const _ = require("lodash");
-const { gsap } = require("gsap");
+const { TweenMax } = require("gsap");
 
 /* ==== Utility functions ===== */
 
@@ -13,134 +13,54 @@ function toHex(s) {
   return h;
 }
 
-function isValidURL(text) {
-  try {
-      new URL(text);
-      return true;
-  } catch {
-      return false;
-  }
-}
-
 /* ===== DOM Manipulation ===== */
 let toElm;
-const CARD_DATA = Symbol.for("cardbased");
-const GIT_LIKE_DATA = Symbol.for("couchdb");
 
-const autoSaveImmediate = function() {
-  if (!toElm) {
-    return;
-  }
-  toElm(null, "docMsgs", "AutoSaveRequested");
-}
-const autoSave = _.debounce(autoSaveImmediate, 1*1000);
-const autoSaveSlow = _.debounce(autoSaveImmediate, 11*1000);
+const getObserver = (toElmFn) => {
+  toElm = toElmFn;
+  return new MutationObserver(function (mutations) {
+    const isTextarea = function (node) {
+      return node.nodeName == "TEXTAREA" && node.className == "edit mousetrap";
+    };
 
+    let textareas = [];
 
-const defineCustomTextarea = (toElmFn, getDataTypeFn) => {
-  if (!toElm) {
-    toElm = toElmFn;
-  }
-
-  customElements.define('gw-textarea', class extends HTMLElement {
-    constructor() {
-      super();
-      this.textarea_ = document.createElement('textarea');
-      this.textarea_.addEventListener('input', this._onInput.bind(this));
-      this.textarea_.addEventListener('keyup', this._selectionHandler.bind(this));
-      this.textarea_.addEventListener('click', this._selectionHandler.bind(this));
-      this.textarea_.addEventListener('focus', this._focusHandler.bind(this));
-    }
-    set isFullscreen(value) {
-      this._isFullscreen = value;
-    }
-    get isFullscreen() {
-      return this._isFullscreen;
-    }
-    static get observedAttributes() { return ['start-value']; }
-
-    attributeChangedCallback(name, oldValue, newValue) {
-      if (name === 'start-value' && !this._isActive() && this.textarea_.value !== newValue ) {
-        this.textarea_.value = newValue;
-        this._resize();
-      } else if (name === 'disabled') {
-        if (newValue) {
-          this.textarea_.setAttribute('disabled', newValue);
+    mutations.map((m) => {
+      [].slice.call(m.addedNodes).map((n) => {
+        if (isTextarea(n)) {
+          textareas.push(n);
         } else {
-          this.textarea_.removeAttribute('disabled');
+          if (n.querySelectorAll) {
+            let tareas = [].slice.call(n.querySelectorAll("textarea.edit"));
+            textareas = textareas.concat(tareas);
+          }
         }
-      }
-    }
+      });
 
-    _isActive() {
-      return this.textarea_ === document.activeElement;
-    }
+      [].slice.call(m.removedNodes).map((n) => {
+        if ("getElementsByClassName" in n && n.getElementsByClassName("edit mousetrap").length != 0) {
+          updateFillets();
+        }
+      })
+    });
 
-    connectedCallback() {
-      this.textarea_.value = this.getAttribute('start-value');
-      this.textarea_.setAttribute('id', 'card-edit-' + this.getAttribute('card-id'));
-      this.textarea_.setAttribute('card-id', this.getAttribute('card-id'));
-      this.textarea_.setAttribute('class', this.getAttribute('class'));
-      this.textarea_.setAttribute('dir', this.getAttribute('dir'));
-      this.textarea_.setAttribute('data-private', this.getAttribute('data-private'));
-      this.textarea_.setAttribute('data-gramm', this.getAttribute('data-gramm'));
-      if (this.getAttribute('disabled')) {
-        this.textarea_.setAttribute('disabled', this.getAttribute('disabled'));
+    if (textareas.length !== 0) {
+      textareas.map((t) => {
+        t.onkeyup = selectionHandler
+        t.onclick = selectionHandler
+        t.onfocus = selectionHandler
+      })
+      if (Object.prototype.hasOwnProperty.call(toElm, 'toMain')) {
+        toElm.toMain('edit-mode-changed', true)
       }
-      this.appendChild(this.textarea_);
-      if (!this.isFullscreen) {
-        this.textarea_.focus();
-        document.addEventListener('click', editBlurHandler);
+      if (document.getElementById("app-fullscreen") === null) {
+        window.addEventListener('click', editBlurHandler)
       }
-      this.offset_ = this.textarea_.offsetHeight - this.textarea_.clientHeight;
-      this._resize();
-    }
-
-    disconnectedCallback() {
-      this.textarea_.removeEventListener('input', this._onInput.bind(this));
-      this.textarea_.removeEventListener('keyup', this._selectionHandler.bind(this));
-      this.textarea_.removeEventListener('click', this._selectionHandler.bind(this));
-      this.textarea_.removeEventListener('focus', this._focusHandler.bind(this));
-      if (!this.isFullscreen) {
-        document.removeEventListener('click', editBlurHandler);
-        updateFillets();
+    } else {
+      if (Object.prototype.hasOwnProperty.call(toElm, 'toMain')) {
+        toElm.toMain('edit-mode-changed', false)
       }
-      if (getDataTypeFn() == CARD_DATA) {
-        autoSave.cancel();
-      } else if (getDataTypeFn() == GIT_LIKE_DATA) {
-        autoSaveSlow.cancel();
-      }
-    }
-
-    _onInput(e) {
-      toElm(e.target.value, "docMsgs", "FieldChanged");
-      if (this.isFullscreen && getDataTypeFn() == CARD_DATA) {
-        autoSave();
-      } else if (this.isFullscreen && getDataTypeFn() == GIT_LIKE_DATA) {
-        autoSaveSlow();
-      }
-      this._resize();
-    }
-
-    _resize() {
-      const col = this.closest('.column');
-      const savedScrollTop = col ? col.scrollTop : null;
-      this.textarea_.style.height = 'auto';
-      this.textarea_.style.height = this.textarea_.scrollHeight + this.offset_ + 'px';
-      if (col !== null && savedScrollTop !== null) col.scrollTop = savedScrollTop;
-    }
-
-    _selectionHandler(e) {
-      selectionHandler(e)
-    }
-
-    _focusHandler(e) {
-      if (this.isFullscreen) {
-        const cardId = this.textarea_.getAttribute('card-id');
-        const cardContent = this.textarea_.value;
-        scrollFullscreen(cardId);
-        toElm([cardId, cardContent], "docMsgs", "FullscreenCardFocused");
-      }
+      window.removeEventListener('click', editBlurHandler);
     }
   });
 }
@@ -184,12 +104,17 @@ const selectionHandler = function () {
 };
 
 const editBlurHandler = (ev) => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log("editBlurHandler", ev)
-  }
-
-  if (ev.target.closest("#document") && !ev.target.closest("div.card.active")) {
-    toElm(null, "docMsgs", "ClickedOutsideCard");
+  let targetClasses = ev.target.classList;
+  if (ev.target.nodeName == "DIV" && targetClasses.contains("card-btn") && targetClasses.contains("save")) {
+    return;
+  } else if (ev.target.nodeName == "DIV" && targetClasses.contains("fullscreen-card-btn")) {
+    return;
+  } else if (isEditTextarea(ev.target)) {
+    return;
+  } else {
+    if(!(isEditTextarea(document.activeElement))) {
+      toElm(null, "docMsgs", "ClickedOutsideCard");
+    }
   }
 };
 
@@ -232,18 +157,17 @@ var scrollFullscreen = function (cid) {
 
 var scrollFullscreenTo = function (cid) {
   var card = document.getElementById("card-" + cid.toString());
-  var col = document.getElementById("app-fullscreen");
+  var col = document.getElementById("fullscreen-main");
   if (card == null) {
+    console.log("scroll error: not found", cid);
     return;
   }
   var rect = card.getBoundingClientRect();
 
-  const newScrollTop = col.scrollTop + (rect.top + rect.height * 0.5 - col.offsetHeight * 0.5);
-  console.log("scrollFullscreenTo", newScrollTop);
-
-  gsap.to(col,  0.25, {
-    scrollTop: newScrollTop,
-    ease: "power2.easeInOut",
+  TweenMax.to(col,  0.25, {
+    scrollTop:
+      col.scrollTop + (rect.top + rect.height * 0.5 - col.offsetHeight * 0.5),
+    ease: Power2.easeInOut,
   });
 }
 
@@ -252,6 +176,7 @@ var scrollTo = function (cid, colIdx, instant, position, errorCount) {
   var col = document.getElementsByClassName("column")[colIdx - 1];
   let doc = document.getElementById("document");
   if (card == null || doc == null) {
+    console.log("scroll error: not found", cid, errorCount);
     window.requestAnimationFrame(()=>{
       if (errorCount <= 3) {
         errorCount++;
@@ -272,9 +197,9 @@ var scrollTo = function (cid, colIdx, instant, position, errorCount) {
   if (instant) {
     col.scrollTop = newScrollTop;
   } else {
-    gsap.to(col, 0.25, {
+    TweenMax.to(col, 0.25, {
       scrollTop: newScrollTop,
-      ease: "power2.easeInOut",
+      ease: Power2.easeInOut,
     });
   }
 };
@@ -303,9 +228,9 @@ var scrollHorizTo = function (colIdx, instant, errorCount) {
   if (instant) {
     appEl.scrollLeft = col.offsetLeft + 0.5  * (col.offsetWidth - appEl.offsetWidth);
   } else {
-    gsap.to(appEl, 0.3, {
+    TweenMax.to(appEl, 0.3, {
       scrollLeft: col.offsetLeft + 0.5  * (col.offsetWidth - appEl.offsetWidth),
-      ease: "power2.easeInOut",
+      ease: Power2.easeInOut,
       onComplete: scrollDoneCallback
     });
   }
@@ -353,7 +278,7 @@ const setColumnFillets = (currColumn, colIdx, filletData) => {
   } else if(filletData[colIdx] != null && filletData[colIdx-1] != null) {
     // Active Descendant
     let topLeftDelta = Math.min(Math.max((filletData[colIdx].top - filletData[colIdx-1].top)*0.5, -16), 16);
-    let bottomLeftDelta = Math.min(Math.max((filletData[colIdx].bottom - filletData[colIdx-1].bottom)*0.5, -16), 16);
+    let bottomLeftDelta = Math.min(Math.max(filletData[colIdx].bottom - filletData[colIdx-1].bottom, -16), 16);
     let allTopLeftFillets = currColumn.getElementsByClassName("fillet top-left");
     let allBottomLeftFillets= currColumn.getElementsByClassName("fillet bottom-left");
     let filletTopLeft = allTopLeftFillets[0];
@@ -378,7 +303,7 @@ const setColumnFillets = (currColumn, colIdx, filletData) => {
         filletTopRight.style.display = "block";
         filletBottomRight.style.display = "block";
         let topRightDelta = Math.min(Math.max((filletData[colIdx].top - filletData[colIdx+1].top)*0.5, -16), 16);
-        let bottomRightDelta = Math.min(Math.max((filletData[colIdx].bottom - filletData[colIdx+1].bottom)*0.5, -16), 16);
+        let bottomRightDelta = Math.min(Math.max(filletData[colIdx].bottom - filletData[colIdx+1].bottom, -16), 16);
 
         setTop(topRightDelta, filletTopRight);
         setBottom(bottomRightDelta, filletBottomRight);
@@ -414,8 +339,8 @@ const setBottom = (delta, el) => {
   }
 }
 
-const updateFillets = (cols) => {
-  let columns = cols || Array.from(document.getElementsByClassName("column"));
+const updateFillets = () => {
+  let columns = Array.from(document.getElementsByClassName("column"));
   let filletData = getFilletData(columns);
   columns.map((c,i) => {
     setColumnFillets(c,i, filletData);
@@ -451,8 +376,6 @@ var shortcuts = [
   "mod+shift+down",
   "mod+shift+k",
   "mod+shift+up",
-  "mod+alt+k",
-  "alt+i",
   "h",
   "j",
   "k",
@@ -500,7 +423,6 @@ var shortcuts = [
   "pagedown",
   "/",
   "w",
-  "z",
   "?",
 ];
 
@@ -532,56 +454,33 @@ if (window.navigator.platform.toUpperCase().indexOf('MAC') < 0 ) {
 var casesShared = (elmData, params) => {
   return {
     ScrollCards: () => {
-      let doScroll = () => {
-        scrollColumns(elmData);
-        scrollHorizontal(elmData.columnIdx, elmData.instant);
-        params.lastActivesScrolled = elmData;
-        params.lastColumnScrolled = elmData.columnIdx;
-        if (params.localStore.isReady()) {
-          params.localStore.set('last-actives', elmData.lastActives);
-        }
-
+      scrollColumns(elmData);
+      scrollHorizontal(elmData.columnIdx, elmData.instant);
+      params.lastActivesScrolled = elmData;
+      params.lastColumnScrolled = elmData.columnIdx;
+      if (params.localStore.isReady()) {
+        params.localStore.set('last-actives', elmData.lastActives);
+      }
+      window.requestAnimationFrame(()=>{
+        updateFillets();
         let columns = Array.from(document.getElementsByClassName("column"));
-
-        if (columns.length == 0) {
-          setTimeout(() => {
-            updateFillets();
-          }, 20);
-        }
-
         columns.map((c, i) => {
           c.addEventListener('scroll', () => {
             if(!params.ticking) {
-              params.ticking = true;
               window.requestAnimationFrame(() => {
-                updateFillets(columns);
+                updateFillets();
                 params.ticking = false;
               })
+
+              params.ticking = true;
             }
           })
         })
-
-        window.requestAnimationFrame(() => {
-          updateFillets(columns);
-        });
-      };
-
-      if (elmData.waitForReflow) {
-        // Elm's own DOM patch is itself deferred to a rAF, so waiting for
-        // just one frame here can still read stale (pre-patch) element
-        // geometry. Only needed by callers whose scroll follows a
-        // card-size-changing CSS change (e.g. collapsed-card view toggle);
-        // regular navigation/search scrolling skips this to stay instant.
-        window.requestAnimationFrame(() => {
-          window.requestAnimationFrame(doScroll);
-        });
-      } else {
-        doScroll();
-      }
+      })
     },
 
     CopyCurrentSubtree: () => {
-      navigator.clipboard.writeText(JSON.stringify(elmData))
+      (window.electronAPI && window.electronAPI.copyText ? window.electronAPI.copyText(JSON.stringify(elmData)) : navigator.clipboard.writeText(JSON.stringify(elmData)))
       const addFlashClass = function () {
         const activeCard = document.querySelectorAll('.card.active')
         const activeDescendants = document.querySelectorAll('.group.active-descendant')
@@ -628,46 +527,19 @@ var casesShared = (elmData, params) => {
       }
     },
 
-    InsertMarkdownLink: () => {
-      const id = elmData
-      const tarea = document.getElementById('card-edit-' + id)
-      const card = document.getElementById('card-' + id)
-
-      if (tarea === null) {
-        console.log('Textarea not found for InsertMarkdownLink command.')
-      } else {
-        const start = tarea.selectionStart
-        const end = tarea.selectionEnd
-        const text = tarea.value.slice(start, end)
-
-        let modifiedText;
-        let cursorPos;
-        if (start !== end) {
-          if (isValidURL(text)) {
-            modifiedText = "[](" + text + ")"
-            newValue = tarea.value.substring(0, start) + modifiedText + tarea.value.substring(end)
-            cursorPos = start + 1
-          } else {
-            modifiedText = "[" + text + "]()"
-            newValue = tarea.value.substring(0, start) + modifiedText + tarea.value.substring(end)
-            cursorPos = start + modifiedText.length - 1
-          }
-          
-          tarea.value = newValue
-          tarea.setSelectionRange(cursorPos, cursorPos)
-          params.DIRTY = true
-          toElm(newValue, 'docMsgs', 'FieldChanged')
-          
-          if (card !== null) {
-            card.dataset.clonedContent = newValue
-          }
-        }
-      }
-    },
-
     SetCursorPosition: () => {
       let pos = elmData[0];
       requestAnimationFrame(() => document.activeElement.setSelectionRange(pos, pos));
+    },
+
+    SetTextareaClone: () => {
+      let id = elmData[0];
+      let card = document.getElementById("card-" + id);
+      if (card === null) {
+        console.error("Card not found for autogrowing textarea");
+      } else {
+        card.dataset.clonedContent = elmData[1];
+      }
     },
 
     ConfirmCancelCard: () => {
@@ -689,7 +561,7 @@ var casesShared = (elmData, params) => {
 /* ===== CommonJS Module exports ===== */
 
 module.exports = {
-  defineCustomTextarea: defineCustomTextarea,
+  getObserver: getObserver,
   scrollHorizontal: scrollHorizontal,
   scrollColumns: scrollColumns,
   scrollFullscreen: scrollFullscreen,

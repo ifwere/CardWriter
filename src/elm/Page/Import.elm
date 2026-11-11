@@ -13,36 +13,26 @@ import Import.Template as Template exposing (Template)
 import Outgoing exposing (Msg(..), send)
 import RandomId
 import Route
-import Session exposing (LoggedIn, Session(..))
+import Session exposing (Session)
 import Types exposing (Tree)
 
 
 type alias Model =
-    { session : LoggedIn
+    { session : Session
     , globalData : GlobalData
     , navKey : Nav.Key
     }
 
 
-init : Nav.Key -> GlobalData -> LoggedIn -> Template -> ( Model, Cmd Msg )
+init : Nav.Key -> GlobalData -> Session -> Template -> ( Model, Cmd Msg )
 init navKey globalData session template =
     let
         ( importTreeDecoder, newSeed ) =
             Import.Single.decoder (GlobalData.seed globalData)
-
-        copyName =
-            template
-                |> Template.toString
-                |> Session.copyNaming session
     in
     ( { session = session, globalData = GlobalData.setSeed newSeed globalData, navKey = navKey }
-    , Template.fetchJSON (TemplateJSONReceived copyName) importTreeDecoder template
+    , Template.fetchJSON (TemplateJSONReceived (Template.toString template)) importTreeDecoder template
     )
-
-
-toSession : Model -> Session
-toSession model =
-    model.session |> LoggedInSession
 
 
 
@@ -70,15 +60,18 @@ update msg model =
 
         TemplateImported tree fileName docId ->
             let
-                cardData =
-                    Data.importTree docId tree
+                author =
+                    model.session |> Session.name |> Maybe.withDefault "jane.doe@gmail.com"
+
+                commitReq_ =
+                    Data.requestCommit tree author Data.empty (Metadata.new docId |> Metadata.renameAndEncode fileName)
             in
-            ( model
-            , Cmd.batch
-                [ send <| SaveCardBased cardData
-                , send <| SaveImportedTree ( docId, fileName )
-                ]
-            )
+            case commitReq_ of
+                Just commitReq ->
+                    ( model, send <| SaveImportedData commitReq )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         TemplateImportSaved docId_ ->
             case docId_ of
@@ -94,5 +87,5 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Import.Incoming.importComplete TemplateImportSaved

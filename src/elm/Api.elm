@@ -1,8 +1,7 @@
-module Api exposing (exportDocx, getPublicDocument)
+module Api exposing (exportDocx)
 
 import Bytes exposing (Bytes)
 import Http exposing (Error(..), Response(..))
-import Json.Decode as Dec exposing (Decoder)
 import Json.Encode as Enc
 import Result exposing (Result(..))
 
@@ -20,14 +19,6 @@ exportDocx msg { docId, markdown } =
         { url = "/export-docx"
         , body = Http.jsonBody body
         , expect = Http.expectBytesResponse msg (resolve Ok)
-        }
-
-
-getPublicDocument : (Result Http.Error a -> msg) -> Decoder a -> String -> Cmd msg
-getPublicDocument msg decoder docId =
-    Http.get
-        { url = "/public/" ++ docId
-        , expect = Http.expectJson msg decoder
         }
 
 

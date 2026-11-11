@@ -16,11 +16,13 @@ const require = createRequire(import.meta.url);
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
-export const LANGUAGES = [
-  "zh_hans", "zh_hant", "es", "ar", "fr", "ru", "de", "ja", "mr", "pes",
-  "it", "ro", "hr", "nl", "hu", "sv", "ca", "br", "cs", "fa",
-  "id", "ko", "pl", "uk", "nb"
-];
+// Derived from the i18n directory so the build follows the translation set
+// shipped with the Elm sources.
+export const LANGUAGES = fs
+  .readdirSync(path.join(ROOT, "i18n"))
+  .filter((name) => name.endsWith(".json"))
+  .map((name) => name.slice(0, -".json".length))
+  .sort();
 
 function prepTranslation(langCode, langData) {
   return langData.flatMap((t) => {

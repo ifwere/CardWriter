@@ -49,12 +49,12 @@ const RENDERER_ENTRIES = {
   "support-modal": "src/electron/support-modal.js"
 };
 
-function resolveElmBin() {
-  try {
-    return require.resolve("elm/bin/elm");
-  } catch {
+function elmCommand() {
+  const bin = path.join(ROOT, "node_modules", ".bin", process.platform === "win32" ? "elm.cmd" : "elm");
+  if (!fs.existsSync(bin)) {
     throw new Error("Elm compiler not found. Run `npm install` first.");
   }
+  return bin;
 }
 
 function cleanApp() {
@@ -91,7 +91,7 @@ function copyMain() {
 }
 
 function compileElm() {
-  const elmBin = resolveElmBin();
+  const elmBin = elmCommand();
   const replacements = buildReplacements();
   let total = 0;
 
@@ -99,9 +99,9 @@ function compileElm() {
     const outPath = path.join(APP, output);
     process.stdout.write(`\n[elm] ${input} -> ${output}\n`);
     execFileSync(
-      process.execPath,
-      [elmBin, "make", input, `--output=${outPath}`, "--optimize"],
-      { cwd: ROOT, stdio: "inherit" }
+      elmBin,
+      ["make", input, `--output=${outPath}`, "--optimize"],
+      { cwd: ROOT, stdio: "inherit", shell: process.platform === "win32" }
     );
 
     const code = fs.readFileSync(outPath, "utf-8");

@@ -5,7 +5,7 @@ import Doc.Fonts as Fonts
 import Doc.TreeUtils exposing (ScrollPosition, scrollPositionToValue)
 import Json.Encode as Enc exposing (..)
 import Page.Doc.Theme as Theme exposing (Theme)
-import Types exposing (Collaborator, CursorPosition(..), DropId, OutsideData, TextCursorInfo, Tree)
+import Types exposing (CollabState, CursorPosition(..), DropId, OutsideData, TextCursorInfo, Tree, dropIdToValue)
 
 
 
@@ -14,7 +14,6 @@ import Types exposing (Collaborator, CursorPosition(..), DropId, OutsideData, Te
 
 type Msg
     = StoreUser Enc.Value
-    | LogoutUser
     | SaveUserSetting ( String, Enc.Value )
       -- === Dialogs, Menus, Window State ===
     | Alert String
@@ -26,30 +25,18 @@ type Msg
     | LoadDocument String
     | CopyDocument String
     | GetDocumentList
-    | RequestDelete String (Maybe String)
+    | RequestDelete String
     | NoDataToSave
     | RenameDocument String
-    | SaveCardBased Enc.Value
-    | SaveImportedTree ( String, String )
-    | SaveCardBasedMigration Enc.Value
-    | PushDeltas Enc.Value
     | CommitData Enc.Value
     | PullData
     | SaveImportedData Enc.Value
     | SaveBulkImportedData Enc.Value
-      -- === AI ===
-    | GenerateNew String
-    | GenerateChildren { prompt : String, id : String }
-    | GenerateBelow { prompt : String, id : String }
-      -- === Collaboration ===
-    | AddCollabRequest String String
-    | RemoveCollabRequest String String
-    | SendCollabState Enc.Value
       -- === Desktop ===
     | SaveToFile String String
     | ExportToFile String String
       -- === DOM ===
-    | ScrollCards (List String) (List ( Int, ScrollPosition )) Int Bool Bool
+    | ScrollCards (List String) (List ( Int, ScrollPosition )) Int Bool
     | ScrollFullscreenCards String
     | DragStart Enc.Value
     | CopyCurrentSubtree Enc.Value
@@ -57,14 +44,14 @@ type Msg
     | SelectAll String
     | FlashPrice
     | TextSurround String String
-    | InsertMarkdownLink String
     | SetField String String
+    | SetTextareaClone String String
     | SetCursorPosition Int
     | SetFullscreen Bool
     | PositionTourStep Int String
       -- === UI ===
     | UpdateCommits ( Enc.Value, Maybe String )
-    | HistorySlider Bool Int
+    | HistorySlider Int
     | SetSidebarState Bool
     | SaveThemeSetting Theme
     | RequestFullscreen
@@ -88,9 +75,6 @@ send info =
         StoreUser user ->
             dataToSend "StoreUser" user
 
-        LogoutUser ->
-            dataToSend "LogoutUser" null
-
         SaveUserSetting ( key, val ) ->
             dataToSend "SaveUserSetting" (list identity [ string key, val ])
 
@@ -110,18 +94,6 @@ send info =
         -- === Database ===
         RenameDocument newDocName ->
             dataToSend "RenameDocument" (string newDocName)
-
-        SaveCardBased data ->
-            dataToSend "SaveCardBased" data
-
-        SaveImportedTree ( docId, name ) ->
-            dataToSend "SaveCardBasedTree" (tupleToValue string ( docId, name ))
-
-        SaveCardBasedMigration data ->
-            dataToSend "SaveCardBasedMigration" data
-
-        PushDeltas data ->
-            dataToSend "PushDeltas" data
 
         CommitData data ->
             dataToSend "CommitData" data
@@ -147,31 +119,11 @@ send info =
         GetDocumentList ->
             dataToSend "GetDocumentList" null
 
-        RequestDelete dbName docName_ ->
-            dataToSend "RequestDelete" (tupleToValue string ( dbName, docName_ |> Maybe.withDefault "Untitled" ))
+        RequestDelete dbName ->
+            dataToSend "RequestDelete" (string dbName)
 
         NoDataToSave ->
             dataToSend "NoDataToSave" null
-
-        -- === AI ===
-        GenerateNew prompt ->
-            dataToSend "GenerateNew" (string prompt)
-
-        GenerateChildren { prompt, id } ->
-            dataToSend "GenerateChildren" (tupleToValue string ( id, prompt ))
-
-        GenerateBelow { prompt, id } ->
-            dataToSend "GenerateBelow" (tupleToValue string ( id, prompt ))
-
-        -- === Collaboration ===
-        AddCollabRequest treeId collabEmail ->
-            dataToSend "AddCollabRequest" (tupleToValue string ( treeId, collabEmail ))
-
-        RemoveCollabRequest treeId collabEmail ->
-            dataToSend "RemoveCollabRequest" (tupleToValue string ( treeId, collabEmail ))
-
-        SendCollabState collabState ->
-            dataToSend "SendCollabState" collabState
 
         -- === Desktop ===
         SaveToFile filename str ->
@@ -181,7 +133,7 @@ send info =
             dataToSend "ExportToFile" (tupleToValue string ( format, str ))
 
         -- === DOM ===
-        ScrollCards lastActives listScrollPositions colIdx instant waitForReflow ->
+        ScrollCards lastActives listScrollPositions colIdx instant ->
             dataToSend "ScrollCards"
                 (object
                     [ ( "columns"
@@ -198,7 +150,6 @@ send info =
                     , ( "lastActives", Enc.list string lastActives )
                     , ( "columnIdx", int colIdx )
                     , ( "instant", bool instant )
-                    , ( "waitForReflow", bool waitForReflow )
                     ]
                 )
 
@@ -223,11 +174,11 @@ send info =
         TextSurround id str ->
             dataToSend "TextSurround" (list string [ id, str ])
 
-        InsertMarkdownLink id ->
-            dataToSend "InsertMarkdownLink" (string id)
-
         SetField id str ->
             dataToSend "SetField" (list string [ id, str ])
+
+        SetTextareaClone id str ->
+            dataToSend "SetTextareaClone" (list string [ id, str ])
 
         SetCursorPosition pos ->
             dataToSend "SetCursorPosition" (int pos)
@@ -251,8 +202,8 @@ send info =
             in
             dataToSend "UpdateCommits" (tupleToValue identity ( objectsValue, headToValue head_ ))
 
-        HistorySlider firstOpen delta ->
-            dataToSend "HistorySlider" (tupleToValue identity ( bool firstOpen, int delta ))
+        HistorySlider delta ->
+            dataToSend "HistorySlider" (int delta)
 
         SetSidebarState isOpen ->
             dataToSend "SetSidebarState" (bool isOpen)

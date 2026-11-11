@@ -72,7 +72,7 @@ msgid "Import from Workflowy or other outliners."
 msgstr ""
 
 #: Elm:TimelineTemplate
-msgid "Timeline 2026"
+msgid "Timeline 2022"
 msgstr ""
 
 #: Elm:TimelineTemplateDesc
@@ -120,11 +120,11 @@ msgid "Open Other Documents"
 msgstr ""
 
 #: Elm:DuplicateDocument
-msgid "Duplicate Tree"
+msgid "Duplicate Document"
 msgstr ""
 
 #: Elm:DeleteDocument
-msgid "Delete Tree"
+msgid "Delete Document"
 msgstr ""
 
 #: Elm:RemoveFromList
@@ -133,10 +133,6 @@ msgstr ""
 
 #: Elm:NeverSaved
 msgid "New Document..."
-msgstr ""
-
-#: Elm:Loading
-msgid "Loading..."
 msgstr ""
 
 #: Elm:UnsavedChanges
@@ -161,10 +157,6 @@ msgstr ""
 
 #: Elm:LastSaved
 msgid "Last saved"
-msgstr ""
-
-#: Elm:LastSynced
-msgid "Last synced"
 msgstr ""
 
 #: Elm:LastEdit
@@ -321,10 +313,6 @@ msgstr ""
 
 #: Elm:MergeCardDown
 msgid "Merge card down"
-msgstr ""
-
-#: Elm:WorksAcrossDocuments
-msgid "(Works across documents)"
 msgstr ""
 
 #: Elm:CopyCurrent
@@ -507,16 +495,8 @@ msgstr ""
 msgid "for Italic"
 msgstr ""
 
-#: Elm:ForInsertLink
-msgid "to Insert Link"
-msgstr ""
-
 #: Elm:ItalicizeSelection
 msgid "Italicize selection"
-msgstr ""
-
-#: Elm:InsertLink
-msgid "Insert Link"
 msgstr ""
 
 #: Elm:SaveChanges
@@ -645,10 +625,6 @@ msgstr ""
 
 #: Elm:EditingFont
 msgid "Editing/Monospace Font"
-msgstr ""
-
-#: Elm:MigrateTooltip
-msgid "Upgrade document to new format"
 msgstr ""
 
 #: Elm:VersionHistory
@@ -796,7 +772,7 @@ msgid "Current Column"
 msgstr ""
 
 #: Elm:ExportSettingCurrentColumnDesc
-msgid "Only cards in the current (vertical) column"
+msgid "Only carsd in the current (vertical) column"
 msgstr ""
 
 #: Elm:ExportSettingWord
@@ -813,10 +789,6 @@ msgstr ""
 
 #: Elm:ExportSettingOPML
 msgid "OPML"
-msgstr ""
-
-#: Elm:CloseExportView
-msgid "Close Export View"
 msgstr ""
 
 #: Elm:DownloadWordFile

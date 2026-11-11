@@ -9,3 +9,4 @@ elm-stuff/
 *.log
 *.swp
 .DS_Store
+.snapshot/

@@ -1,4 +1,4 @@
-module Doc.Metadata exposing (Metadata, decoder, decoderImport, encode, getCollaborators, getCreatedAt, getDocId, getDocName, getUpdatedAt, isSameDocId, listDecoder, new, renameAndEncode, responseDecoder)
+module Doc.Metadata exposing (Metadata, decoder, decoderImport, encode, getCreatedAt, getDocId, getDocName, getUpdatedAt, isSameDocId, listDecoder, new, renameAndEncode)
 
 import Coders exposing (maybeToValue)
 import Json.Decode as Dec exposing (Decoder)
@@ -15,7 +15,6 @@ type Metadata
 
 type alias MetadataRecord =
     { docName : Maybe String
-    , collaborators : List String
     , createdAt : Time.Posix
     , updatedAt : Time.Posix
     , rev : Maybe String
@@ -26,7 +25,6 @@ new : String -> Metadata
 new docId =
     Metadata docId
         { docName = Nothing
-        , collaborators = []
         , rev = Nothing
         , createdAt = Time.millisToPosix 0
         , updatedAt = Time.millisToPosix 0
@@ -41,11 +39,6 @@ getDocId (Metadata docId _) =
 getDocName : Metadata -> Maybe String
 getDocName (Metadata _ { docName }) =
     docName
-
-
-getCollaborators : Metadata -> List String
-getCollaborators (Metadata _ { collaborators }) =
-    collaborators
 
 
 getCreatedAt : Metadata -> Time.Posix
@@ -69,41 +62,21 @@ isSameDocId m1 m2 =
 
 decoder : Decoder Metadata
 decoder =
-    Dec.oneOf
-        [ Dec.map6 (\id n cls c u r -> Metadata id (MetadataRecord n cls c u r))
-            (Dec.field "docId" Dec.string)
-            (Dec.field "name" (Dec.maybe Dec.string))
-            (Dec.field "collaborators" (Dec.list Dec.string))
-            (Dec.field "createdAt" Dec.int |> Dec.map Time.millisToPosix)
-            (Dec.field "updatedAt" Dec.int |> Dec.map Time.millisToPosix)
-            (Dec.field "_rev" (Dec.maybe Dec.string))
-        , Dec.map5 (\id n c u r -> Metadata id (MetadataRecord n [] c u r))
-            (Dec.field "docId" Dec.string)
-            (Dec.field "name" (Dec.maybe Dec.string))
-            (Dec.field "createdAt" Dec.int |> Dec.map Time.millisToPosix)
-            (Dec.field "updatedAt" Dec.int |> Dec.map Time.millisToPosix)
-            (Dec.field "_rev" (Dec.maybe Dec.string))
-        ]
+    Dec.map5 (\id n c u r -> Metadata id (MetadataRecord n c u r))
+        (Dec.field "docId" Dec.string)
+        (Dec.field "name" (Dec.maybe Dec.string))
+        (Dec.field "createdAt" Dec.int |> Dec.map Time.millisToPosix)
+        (Dec.field "updatedAt" Dec.int |> Dec.map Time.millisToPosix)
+        (Dec.field "_rev" (Dec.maybe Dec.string))
 
 
 listDecoder : Decoder (List Metadata)
 listDecoder =
-    Dec.list decoder
+    Dec.field "rows" (Dec.list (Dec.field "value" decoder))
 
 
-responseDecoder : Decoder (List Metadata)
-responseDecoder =
-    Dec.map5 (\id n cls c u -> Metadata id (MetadataRecord n cls c u Nothing))
-        (Dec.field "id" Dec.string)
-        (Dec.field "name" (Dec.maybe Dec.string))
-        (Dec.field "collaborators" (Dec.list Dec.string))
-        (Dec.field "createdAt" Dec.int |> Dec.map Time.millisToPosix)
-        (Dec.field "updatedAt" Dec.int |> Dec.map Time.millisToPosix)
-        |> Dec.list
-
-
-decoderImport : Int -> Decoder (Maybe Metadata)
-decoderImport seed =
+decoderImport : Decoder (Maybe Metadata)
+decoderImport =
     let
         builder id n c u d =
             if d then
@@ -111,7 +84,7 @@ decoderImport seed =
 
             else
                 Just <|
-                    Metadata (fromObjectId seed id) (MetadataRecord n [] c u Nothing)
+                    Metadata (fromObjectId id) (MetadataRecord n c u Nothing)
     in
     Dec.succeed builder
         |> required "_id" Dec.string

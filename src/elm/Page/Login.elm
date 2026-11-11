@@ -1,20 +1,19 @@
-module Page.Login exposing (Model, Msg, globalData, init, navKey, subscriptions, toSession, transition, update, view)
+module Page.Login exposing (Model, Msg, globalData, init, navKey, subscriptions, toUser, update, view)
 
 import Ant.Icons.Svg as AntIcons
 import Browser.Dom
 import Browser.Navigation as Nav
 import GlobalData exposing (GlobalData)
 import Html exposing (..)
-import Html.Attributes exposing (autocomplete, autofocus, class, for, href, id, src, type_, value)
+import Html.Attributes exposing (autocomplete, autofocus, class, for, href, id, placeholder, src, type_, value)
 import Html.Events exposing (onClick, onInput, onSubmit)
 import Html.Extra exposing (viewIf)
 import Http exposing (Error(..))
 import Result exposing (Result)
 import Route
-import Session exposing (Guest, LoggedIn, Session(..))
+import Session exposing (Session)
 import Svg.Attributes
 import Task
-import Translation
 import Utils exposing (getFieldErrors)
 import Validate exposing (Valid, Validator, ifBlank, ifInvalidEmail, ifTrue, validate)
 
@@ -25,8 +24,7 @@ import Validate exposing (Valid, Validator, ifBlank, ifInvalidEmail, ifTrue, val
 
 type alias Model =
     { globalData : GlobalData
-    , session : Guest
-    , transition : Maybe LoggedIn
+    , session : Session
     , navKey : Nav.Key
     , email : String
     , password : String
@@ -41,11 +39,10 @@ type Field
     | Password
 
 
-init : Nav.Key -> GlobalData -> Guest -> ( Model, Cmd msg )
+init : Nav.Key -> GlobalData -> Session -> ( Model, Cmd msg )
 init nKey gData session =
     ( { globalData = gData
       , session = session
-      , transition = Nothing
       , navKey = nKey
       , email = ""
       , password = ""
@@ -56,14 +53,9 @@ init nKey gData session =
     )
 
 
-toSession : Model -> Session
-toSession model =
-    model.session |> GuestSession
-
-
-transition : Model -> Maybe LoggedIn
-transition model =
-    model.transition
+toUser : Model -> Session
+toUser model =
+    model.session
 
 
 navKey : Model -> Nav.Key
@@ -86,8 +78,8 @@ type Msg
     | EnteredEmail String
     | EnteredPassword String
     | ToggleShowPassword
-    | CompletedLogin (Result Http.Error ( LoggedIn, Translation.Language ))
-    | UserSaved
+    | CompletedLogin (Result Http.Error Session)
+    | GotUser Session
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -115,8 +107,8 @@ update msg model =
         ToggleShowPassword ->
             ( { model | showPassword = not model.showPassword }, Task.attempt (\_ -> NoOp) (Browser.Dom.focus "password-input") )
 
-        CompletedLogin (Ok ( user, lang )) ->
-            ( { model | transition = Just user, globalData = GlobalData.setLanguage lang model.globalData }, Session.storeLogin lang user )
+        CompletedLogin (Ok user) ->
+            ( { model | session = user }, Session.storeLogin user )
 
         CompletedLogin (Err error) ->
             let
@@ -144,7 +136,7 @@ update msg model =
             in
             ( { model | errors = [ errorMsg ], password = "" }, Cmd.none )
 
-        UserSaved ->
+        GotUser user ->
             ( model, Route.pushUrl model.navKey Route.Root )
 
 
@@ -270,5 +262,5 @@ view model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Session.userLoggedIn UserSaved
+subscriptions model =
+    Session.loginChanges GotUser

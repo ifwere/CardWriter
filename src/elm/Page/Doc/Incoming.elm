@@ -3,32 +3,43 @@ port module Page.Doc.Incoming exposing (Msg(..), subscribe)
 import Coders exposing (..)
 import File exposing (File)
 import Json.Decode as Dec exposing (Decoder, decodeValue, errorToString, field)
-import Types exposing (Children(..), Collaborator, CursorPosition(..), OutsideData, TextCursorInfo, Tree)
+import Time
+import Types exposing (Children(..), CollabState, CursorPosition(..), OutsideData, TextCursorInfo, Tree)
 
 
 type
     Msg
     -- === Dialogs, Menus, Window State ===
     = CancelCardConfirmed
+      -- === Database ===
+    | DataSaved Dec.Value
+    | DataReceived Dec.Value
+    | NotFound
+    | SavedRemotely Time.Posix
+      -- === Desktop ===
+    | SavedToFile String Time.Posix
+    | ClickedExport
+      -- === Metadata ===
+    | MetadataSynced Dec.Value
+    | MetadataSaved Dec.Value
+    | MetadataSaveError
       -- === DOM ===
-    | InitialActivation String
     | DragStarted String
     | DragExternalStarted
     | DropExternal String
+    | FullscreenChanged Bool
     | Paste Tree
     | PasteInto Tree
     | FieldChanged String
-    | AutoSaveRequested
-    | FullscreenCardFocused String String
     | TextCursor TextCursorInfo
     | ClickedOutsideCard
     | CheckboxClicked String Int
       -- === UI ===
+    | FontSelectorOpen (List String)
     | Keyboard String
       -- === Misc ===
     | WillPrint
-    | RecvCollabState Collaborator
-    | RecvCollabUsers (List Collaborator)
+    | RecvCollabState CollabState
     | CollaboratorDisconnected String
       -- === TESTING ===
     | TestTextImportLoaded (List File)
@@ -79,15 +90,43 @@ subscribe tagger onError =
                 "CancelCardConfirmed" ->
                     tagger <| CancelCardConfirmed
 
-                -- === DOM ===
-                "InitialActivation" ->
-                    case decodeValue (Dec.oneOf [ Dec.string, Dec.null "" ]) outsideInfo.data of
-                        Ok cardId ->
-                            tagger <| InitialActivation cardId
+                -- === Database ===
+                "DataSaved" ->
+                    tagger <| DataSaved outsideInfo.data
+
+                "DataReceived" ->
+                    tagger <| DataReceived outsideInfo.data
+
+                "NotFound" ->
+                    tagger <| NotFound
+
+                "MetadataSynced" ->
+                    tagger <| MetadataSynced outsideInfo.data
+
+                "MetadataSaved" ->
+                    tagger <| MetadataSaved outsideInfo.data
+
+                "SavedRemotely" ->
+                    case decodeValue Dec.int outsideInfo.data of
+                        Ok time ->
+                            tagger <| SavedRemotely (Time.millisToPosix time)
 
                         Err e ->
                             onError (errorToString e)
 
+                -- === Desktop ===
+                "SavedToFile" ->
+                    case decodeValue (tupleDecoder Dec.string (Dec.map Time.millisToPosix <| Dec.int)) outsideInfo.data of
+                        Ok ( path, timestamp ) ->
+                            tagger <| SavedToFile path timestamp
+
+                        Err e ->
+                            onError (errorToString e)
+
+                "ClickedExport" ->
+                    tagger <| ClickedExport
+
+                -- === DOM ===
                 "DragStarted" ->
                     case decodeValue Dec.string outsideInfo.data of
                         Ok dragId ->
@@ -103,6 +142,14 @@ subscribe tagger onError =
                     case decodeValue Dec.string outsideInfo.data of
                         Ok dropText ->
                             tagger <| DropExternal dropText
+
+                        Err e ->
+                            onError (errorToString e)
+
+                "FullscreenChanged" ->
+                    case decodeValue Dec.bool outsideInfo.data of
+                        Ok isFullscreen ->
+                            tagger <| FullscreenChanged isFullscreen
 
                         Err e ->
                             onError (errorToString e)
@@ -131,17 +178,6 @@ subscribe tagger onError =
                         Err e ->
                             onError (errorToString e)
 
-                "AutoSaveRequested" ->
-                    tagger <| AutoSaveRequested
-
-                "FullscreenCardFocused" ->
-                    case decodeValue (tupleDecoder Dec.string Dec.string) outsideInfo.data of
-                        Ok ( cardId, fieldId ) ->
-                            tagger <| FullscreenCardFocused cardId fieldId
-
-                        Err e ->
-                            onError (errorToString e)
-
                 "TextCursor" ->
                     case decodeValue textCursorInfoDecoder outsideInfo.data of
                         Ok textCursorInfo ->
@@ -162,6 +198,14 @@ subscribe tagger onError =
                             onError (errorToString e)
 
                 -- === UI ===
+                "FontSelectorOpen" ->
+                    case decodeValue (Dec.list Dec.string) outsideInfo.data of
+                        Ok fonts ->
+                            tagger <| FontSelectorOpen fonts
+
+                        Err e ->
+                            onError (errorToString e)
+
                 "Keyboard" ->
                     case decodeValue Dec.string outsideInfo.data of
                         Ok shortcut ->
@@ -178,14 +222,6 @@ subscribe tagger onError =
                     case decodeValue collabStateDecoder outsideInfo.data of
                         Ok collabState ->
                             tagger <| RecvCollabState collabState
-
-                        Err e ->
-                            onError (errorToString e)
-
-                "RecvCollabUsers" ->
-                    case decodeValue (Dec.list collabStateDecoder) outsideInfo.data of
-                        Ok collabStates ->
-                            tagger <| RecvCollabUsers collabStates
 
                         Err e ->
                             onError (errorToString e)

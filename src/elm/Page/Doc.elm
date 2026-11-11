@@ -1,20 +1,23 @@
-module Page.Doc exposing (Model, Msg, MsgToParent(..), getActiveId, getActiveTree, getCollaborators, getGlobalData, getTextCursorInfo, getViewMode, getWorkingTree, init, isDirty, isFullscreen, isNormalMode, lastActives, maybeActivate, opaqueIncoming, opaqueUpdate, publicTreeLoaded, setBlock, setDirty, setGlobalData, setLoading, setTree, setWorkingTree, subscriptions, toggleEditing, view)
+module Page.Doc exposing (Model, Msg, ParentMsg(..), activate, checkoutCommit, incoming, init, saveAndStopEditing, saveCardIfEditing, subscriptions, update, view)
 
 import Ant.Icons.Svg as AntIcons
 import Browser.Dom exposing (Element)
-import Coders exposing (collabStateEncoder, treeToJSON, treeToValue)
+import Coders exposing (treeToMarkdownOutline, treeToMarkdownString, treeToValue)
+import Debouncer.Basic as Debouncer exposing (Debouncer, fromSeconds, provideInput, toDebouncer)
+import Doc.Data as Data
+import Doc.Data.Conflict exposing (Selection)
 import Doc.Fonts as Fonts
 import Doc.Fullscreen as Fullscreen
 import Doc.TreeStructure as TreeStructure exposing (defaultTree)
 import Doc.TreeUtils exposing (..)
-import Doc.UI as UI exposing (viewMobileButtons, viewSearchField)
+import Doc.UI as UI exposing (countWords, viewConflict, viewMobileButtons, viewSearchField)
 import GlobalData exposing (GlobalData)
-import Html exposing (Attribute, Html, div, node, span, text)
-import Html.Attributes as Attributes exposing (attribute, class, classList, dir, id, style, title)
-import Html.Events exposing (custom, onClick, onDoubleClick)
+import Html exposing (Attribute, Html, div, span, text, textarea, ul)
+import Html.Attributes as Attributes exposing (attribute, class, classList, dir, id, style, title, value)
+import Html.Events exposing (custom, onClick, onDoubleClick, onInput)
 import Html.Extra exposing (viewIf)
 import Html.Keyed as Keyed
-import Html.Lazy exposing (lazy2, lazy4, lazy5, lazy7, lazy8)
+import Html.Lazy exposing (lazy2, lazy3, lazy4, lazy7, lazy8)
 import Html5.DragDrop as DragDrop
 import Json.Decode as Json
 import List.Extra as ListExtra
@@ -22,86 +25,93 @@ import Markdown
 import Outgoing exposing (Msg(..), send)
 import Page.Doc.Incoming as Incoming exposing (Msg(..))
 import Random
-import RandomId exposing (stringGenerator)
 import Regex
 import Task
 import Time
 import Translation exposing (Language, TranslationId(..), tr)
 import Types exposing (..)
-import UI.Collaborators
+import Utils exposing (randomPositiveInt)
 
 
 
 -- MODEL
 
 
-type alias ModelData =
+type alias Model =
     -- Document state
     { workingTree : TreeStructure.Model
+    , data : Data.Model
 
     -- SPA Page State
     , globalData : GlobalData
     , loading : Bool
-    , block : Maybe String
+    , isExpired : Bool
 
     -- Transient state
     , viewState : ViewState
     , dirty : Bool
+    , lastLocalSave : Maybe Time.Posix
+    , lastRemoteSave : Maybe Time.Posix
+    , field : String
     , textCursorInfo : TextCursorInfo
+    , debouncerLocalSave : Debouncer () ()
+    , debouncerStateCommit : Debouncer () ()
     , fileSearchField : String
-    , cardsCollapsed : Bool
+    , wordcountTrayOpen : Bool
+    , fontSelectorOpen : Bool
 
     -- Settings
     , uid : String
     , fonts : Fonts.Model
+    , startingWordcount : Int
     }
-
-
-type Model
-    = Model ModelData
 
 
 init : Bool -> GlobalData -> Model
 init isNew globalData =
-    Model
-        { workingTree = TreeStructure.defaultModel
-        , globalData = globalData
-        , loading = not isNew
-        , block = Nothing
-        , uid = "0"
-        , viewState =
-            { viewMode =
-                if isNew then
-                    Editing { cardId = "1", field = "" }
+    { workingTree = TreeStructure.defaultModel
+    , data = Data.empty
+    , globalData = globalData
+    , loading = not isNew
+    , isExpired = False
+    , debouncerLocalSave =
+        Debouncer.debounce (fromSeconds 0.5)
+            |> Debouncer.settleWhenQuietFor (Just <| fromSeconds 0.5)
+            |> toDebouncer
+    , debouncerStateCommit =
+        Debouncer.throttle (fromSeconds 3)
+            |> Debouncer.settleWhenQuietFor (Just <| fromSeconds 3)
+            |> toDebouncer
+    , uid = "0"
+    , viewState =
+        { active = "1"
+        , viewMode =
+            if isNew then
+                Editing
 
-                else
-                    Normal ""
-            , activePast = []
-            , descendants = []
-            , ancestors = [ "0" ]
-            , searchField = Nothing
-            , dragModel = ( DragDrop.init, DragExternalModel Nothing False )
-            , draggedTree = Nothing
-            , copiedTree = Nothing
-            , clipboardTree = Nothing
-            , collaborators = []
-            }
-        , dirty = False
-        , textCursorInfo = { selected = False, position = End, text = ( "", "" ) }
-        , fileSearchField = ""
-        , cardsCollapsed = False
-        , fonts = Fonts.default
+            else
+                Normal
+        , activePast = []
+        , descendants = []
+        , ancestors = [ "0" ]
+        , searchField = Nothing
+        , dragModel = ( DragDrop.init, DragExternalModel Nothing False )
+        , draggedTree = Nothing
+        , copiedTree = Nothing
+        , clipboardTree = Nothing
+        , collaborators = []
         }
-
-
-publicTreeLoaded : Tree -> Model -> Model
-publicTreeLoaded newTree (Model model) =
-    Model
-        { model
-            | workingTree = TreeStructure.setTree newTree model.workingTree
-            , loading = False
-            , block = Just "Cannot edit or add cards to a public document."
-        }
+    , dirty = False
+    , lastLocalSave = Nothing
+    , lastRemoteSave = Nothing
+    , field = ""
+    , textCursorInfo = { selected = False, position = End, text = ( "", "" ) }
+    , fileSearchField = ""
+    , wordcountTrayOpen = False
+    , fontSelectorOpen = False
+    , fonts = Fonts.default
+    , startingWordcount = 0
+    }
 
 
 
@@ -115,9 +125,11 @@ type Msg
     | SearchFieldUpdated String
       -- === Card Editing  ===
     | OpenCard String String
+    | UpdateActiveField String String
     | AutoSave
     | SaveAndCloseCard
     | EditToFullscreenMode
+    | FullscreenMsg Fullscreen.Msg
     | DeleteCard String
       -- === Card Insertion  ===
     | InsertAbove String
@@ -126,20 +138,26 @@ type Msg
       -- === Dragging ===
     | DragDropMsg (DragDrop.Msg String DropId)
     | DragExternal DragExternalMsg
-      -- === Fullscreen ===
-    | ExitFullscreenRequested
-    | SaveFromFullscreen
-    | SaveAndExitFullscreen
+      -- === History ===
+    | ThrottledLocalSave (Debouncer.Msg ())
+    | LocalSave Time.Posix
+    | ThrottledCommit (Debouncer.Msg ())
+    | Commit Time.Posix
+    | SetSelection String Selection String
+    | Resolve String
+      -- === UI ===
+      -- Misc UI
+    | FullscreenRequested
       -- === Ports ===
+    | Pull
     | LogErr String
 
 
-type MsgToParent
-    = ParentAddToast ToastPersistence Toast
+type ParentMsg
+    = NoParentMsg
     | CloseTooltip
-    | OpenAIPrompt
-    | LocalSave CardTreeOp
-    | Commit
+    | LocalSaveDo Time.Posix
+    | CommitDo Time.Posix
 
 
 type DragExternalMsg
@@ -147,17 +165,8 @@ type DragExternalMsg
     | DragLeave DropId
 
 
-opaqueUpdate : Msg -> Model -> ( Model, Cmd Msg, List MsgToParent )
-opaqueUpdate msg (Model model) =
-    let
-        ( newModel, cmd, pMsgs ) =
-            update msg model
-    in
-    ( Model newModel, cmd, pMsgs )
-
-
-update : Msg -> ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
-update msg ({ workingTree } as model) =
+updateDoc : Msg -> Model -> ( Model, Cmd Msg )
+updateDoc msg ({ workingTree } as model) =
     let
         vs =
             model.viewState
@@ -165,7 +174,11 @@ update msg ({ workingTree } as model) =
     case msg of
         -- === Card Activation ===
         Activate id ->
-            changeMode { to = Normal id, instant = False, save = True } model
+            ( model
+            , Cmd.none
+            )
+                |> saveCardIfEditing
+                |> activate id False
 
         SearchFieldUpdated inputField ->
             let
@@ -188,10 +201,9 @@ update msg ({ workingTree } as model) =
                 ( maybeBlur, newSearchField ) =
                     case inputField of
                         "" ->
-                            ( \( m, c, p ) ->
+                            ( \( m, c ) ->
                                 ( m
                                 , Cmd.batch [ c, Task.attempt (\_ -> NoOp) (Browser.Dom.blur "search-input") ]
-                                , p
                                 )
                             , Nothing
                             )
@@ -214,54 +226,75 @@ update msg ({ workingTree } as model) =
                 firstFilteredCardId_ =
                     ListExtra.find (\cId -> List.member cId filteredCardIds) allCardsInOrder
 
-                maybeChangeActive =
+                maybeActivate =
                     case ( newSearchField, firstFilteredCardId_ ) of
                         ( Just _, Just id ) ->
                             activate id False
 
                         ( Nothing, _ ) ->
-                            activate (getActiveId (Model model)) False
+                            activate vs.active False
 
                         _ ->
                             identity
             in
             ( { model | viewState = { vs | searchField = newSearchField } }
             , Cmd.none
-            , []
             )
                 |> maybeBlur
-                |> maybeChangeActive
+                |> maybeActivate
 
         -- === Card Editing  ===
         OpenCard id str ->
-            model
+            ( model
+            , Cmd.none
+            )
                 |> openCard id str
 
+        UpdateActiveField id str ->
+            ( { model
+                | field = str
+                , dirty = True
+              }
+            , Cmd.batch
+                [ send <| SetDirty True
+                , send <| SetTextareaClone id str
+                ]
+            )
+                |> localSave
+
         AutoSave ->
-            ( model, Cmd.none, [] ) |> saveCardIfEditing
+            ( model, Cmd.none ) |> saveCardIfEditing
 
         SaveAndCloseCard ->
-            changeMode
-                { to = Normal (getActiveId (Model model)), instant = True, save = True }
-                model
+            saveAndStopEditing model
 
         EditToFullscreenMode ->
-            case vs.viewMode of
-                Editing { cardId, field } ->
-                    changeMode
-                        { to = FullscreenEditing { cardId = cardId, field = field }
-                        , instant = True
-                        , save = True
-                        }
-                        model
+            model |> enterFullscreen
 
-                _ ->
-                    ( model, Cmd.none, [] )
+        FullscreenMsg fullscreenMsg ->
+            case fullscreenMsg of
+                Fullscreen.OpenCard id str ->
+                    ( model
+                    , Cmd.none
+                    )
+                        |> saveCardIfEditing
+                        |> openCardFullscreen id str
+
+                Fullscreen.UpdateField id str ->
+                    ( { model | dirty = True, field = str }
+                    , send <| SetDirty True
+                    )
+                        |> localSave
+                        |> (if vs.active /= id then
+                                activate id False
+
+                            else
+                                identity
+                           )
 
         DeleteCard id ->
             ( model
             , Cmd.none
-            , []
             )
                 |> deleteCard id
 
@@ -269,21 +302,18 @@ update msg ({ workingTree } as model) =
         InsertAbove id ->
             ( model
             , Cmd.none
-            , []
             )
                 |> insertAbove id ""
 
         InsertBelow id ->
             ( model
             , Cmd.none
-            , []
             )
                 |> insertBelow id ""
 
         InsertChild id ->
             ( model
             , Cmd.none
-            , []
             )
                 |> insertChild id ""
 
@@ -309,9 +339,7 @@ update msg ({ workingTree } as model) =
                         |> Maybe.map .event
                         |> Maybe.map (\json -> send <| DragStart json)
                         |> Maybe.withDefault Cmd.none
-                    , []
                     )
-                        |> preventIfBlocked model
 
                 ( Nothing, Just ( _, dropId, _ ) ) ->
                     -- Drop success
@@ -333,148 +361,205 @@ update msg ({ workingTree } as model) =
                                                 ((getParent id model.workingTree.tree |> Maybe.map .id) |> Maybe.withDefault "0")
                                                 ((getIndex id model.workingTree.tree |> Maybe.withDefault 0) + 1)
                             in
-                            ( { modelDragUpdated | viewState = { vs | draggedTree = Nothing }, dirty = True }, Cmd.batch [ send <| SetDirty True, send <| DragDone ], [] )
+                            ( { modelDragUpdated | viewState = { vs | draggedTree = Nothing }, dirty = True }, Cmd.batch [ send <| SetDirty True, send <| DragDone ] )
                                 |> moveOperation
-                                |> andThen (changeMode { to = Normal draggedTree.id, instant = False, save = True })
 
                         Nothing ->
-                            ( modelDragUpdated, Cmd.none, [] )
+                            ( modelDragUpdated, Cmd.none )
 
                 ( Nothing, Nothing ) ->
                     -- NotDragging
                     case vs.draggedTree of
                         Just ( draggedTree, parentId, idx ) ->
-                            ( modelDragUpdated, Cmd.none, [] )
+                            ( modelDragUpdated, Cmd.none )
                                 |> move draggedTree parentId idx
 
                         Nothing ->
-                            ( modelDragUpdated, Cmd.none, [] )
+                            ( modelDragUpdated, Cmd.none )
 
                 ( Just _, Just _ ) ->
                     -- Should be Impossible: both Dragging and Dropped
-                    ( modelDragUpdated, Cmd.none, [] )
+                    ( modelDragUpdated, Cmd.none )
 
         DragExternal dragExternalMsg ->
             case dragExternalMsg of
                 DragEnter dId ->
-                    ( { model | viewState = { vs | dragModel = ( Tuple.first vs.dragModel, { dropId = Just dId, isDragging = True } ) } }, Cmd.none, [] )
+                    ( { model | viewState = { vs | dragModel = ( Tuple.first vs.dragModel, { dropId = Just dId, isDragging = True } ) } }, Cmd.none )
 
                 DragLeave dId ->
                     if (Tuple.second vs.dragModel |> .dropId) == Just dId then
-                        ( { model | viewState = { vs | dragModel = ( Tuple.first vs.dragModel, { dropId = Nothing, isDragging = True } ) } }, Cmd.none, [] )
+                        ( { model | viewState = { vs | dragModel = ( Tuple.first vs.dragModel, { dropId = Nothing, isDragging = True } ) } }, Cmd.none )
 
                     else
-                        ( model, Cmd.none, [] )
+                        ( model, Cmd.none )
 
-        -- === Fullscreen ===
-        ExitFullscreenRequested ->
-            case vs.viewMode of
-                FullscreenEditing { cardId, field } ->
-                    changeMode
-                        { to = Editing { cardId = cardId, field = field }
-                        , instant = True
-                        , save = True
-                        }
-                        model
+        -- === History ===
+        ThrottledLocalSave subMsg ->
+            let
+                ( subModel, subCmd, emitted_ ) =
+                    Debouncer.update subMsg model.debouncerLocalSave
 
-                _ ->
-                    ( model, Cmd.none, [] )
+                mappedCmd =
+                    Cmd.map ThrottledLocalSave subCmd
 
-        SaveFromFullscreen ->
-            case vs.viewMode of
-                FullscreenEditing { cardId, field } ->
-                    saveCard { cardId = cardId, field = field } model
+                updatedModel =
+                    { model | debouncerLocalSave = subModel }
+            in
+            case emitted_ of
+                Just () ->
+                    ( updatedModel
+                    , Cmd.batch [ Task.perform LocalSave Time.now, mappedCmd ]
+                    )
 
-                _ ->
-                    ( model, Cmd.none, [] )
+                Nothing ->
+                    ( updatedModel, mappedCmd )
 
-        SaveAndExitFullscreen ->
-            case vs.viewMode of
-                FullscreenEditing { cardId, field } ->
-                    changeMode
-                        { to = Normal cardId
-                        , instant = True
-                        , save = True
-                        }
-                        model
+        LocalSave time ->
+            ( model, Cmd.none )
 
-                _ ->
-                    ( model, Cmd.none, [] )
+        ThrottledCommit subMsg ->
+            let
+                ( subModel, subCmd, emitted_ ) =
+                    Debouncer.update subMsg model.debouncerStateCommit
+
+                mappedCmd =
+                    Cmd.map ThrottledCommit subCmd
+
+                updatedModel =
+                    { model | debouncerStateCommit = subModel }
+            in
+            case emitted_ of
+                Just () ->
+                    ( updatedModel
+                    , Cmd.batch [ Task.perform Commit Time.now, mappedCmd ]
+                    )
+
+                Nothing ->
+                    ( updatedModel, mappedCmd )
+
+        Commit time ->
+            ( model, Cmd.none )
+
+        SetSelection cid selection id ->
+            let
+                newData =
+                    Data.conflictSelection cid selection model.data
+            in
+            ( { model
+                | data = newData
+                , workingTree = TreeStructure.setTreeWithConflicts (Data.conflictList newData) model.workingTree.tree model.workingTree
+              }
+            , Cmd.none
+            )
+                |> activate id True
+
+        Resolve cid ->
+            let
+                newData =
+                    Data.resolve cid model.data
+            in
+            ( { model
+                | data = newData
+                , workingTree = TreeStructure.setTreeWithConflicts (Data.conflictList newData) model.workingTree.tree model.workingTree
+              }
+            , Cmd.none
+            )
+                |> localSave
+                |> addToHistory
+
+        -- === UI ===
+        FullscreenRequested ->
+            ( model, send <| RequestFullscreen )
 
         -- === Ports ===
+        Pull ->
+            ( model, send <| PullData )
+
         LogErr _ ->
-            ( model, Cmd.none, [] )
+            ( model, Cmd.none )
 
         NoOp ->
             ( model
             , Cmd.none
-            , []
             )
 
 
-localSave : CardTreeOp -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-localSave op ( model, cmd, prevMsgsToParent ) =
-    ( model
-    , cmd
-    , prevMsgsToParent ++ [ LocalSave op ]
-    )
+update : Msg -> Model -> ( Model, Cmd Msg, ParentMsg )
+update msg model =
+    case msg of
+        Commit commitTime ->
+            updateDoc msg model |> parentMsg (CommitDo commitTime)
+
+        LocalSave saveTime ->
+            updateDoc msg model |> parentMsg (LocalSaveDo saveTime)
+
+        _ ->
+            updateDoc msg model |> parentMsg NoParentMsg
 
 
-addToHistory : ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-addToHistory ( model, cmd, prevMsgsToParent ) =
-    ( model
-    , cmd
-    , prevMsgsToParent ++ [ Commit ]
-    )
+parentMsg : ParentMsg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg, ParentMsg )
+parentMsg pMsg ( model, cmd ) =
+    ( model, cmd, pMsg )
 
 
-opaqueIncoming : Incoming.Msg -> Model -> ( Model, Cmd Msg, List MsgToParent )
-opaqueIncoming msg (Model model) =
-    let
-        ( newModel, cmd, msgsToParent ) =
-            incoming msg model
-    in
-    ( Model newModel, cmd, msgsToParent )
-
-
-incoming : Incoming.Msg -> ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
+incoming : Incoming.Msg -> Model -> ( Model, Cmd Msg )
 incoming incomingMsg model =
     let
         vs =
             model.viewState
-
-        activeId =
-            getActiveId (Model model)
     in
     case incomingMsg of
         -- === Dialogs, Menus, Window State ===
         CancelCardConfirmed ->
             ( { model | dirty = False }
             , send <| SetDirty False
-            , []
             )
                 |> cancelCard
 
+        -- === Database ===
+        DataSaved dataIn ->
+            let
+                newData =
+                    Data.success dataIn model.data
+            in
+            ( { model
+                | data = newData
+                , lastLocalSave = Data.lastCommitTime newData |> Maybe.map Time.millisToPosix
+                , dirty = False
+              }
+            , send <| SetDirty False
+            )
+
+        DataReceived dataIn ->
+            dataReceived dataIn model
+
+        NotFound ->
+            ( model, Cmd.none )
+
+        MetadataSynced _ ->
+            ( model, Cmd.none )
+
+        MetadataSaved _ ->
+            ( model, Cmd.none )
+
+        MetadataSaveError ->
+            ( model, Cmd.none )
+
+        SavedRemotely time ->
+            ( { model
+                | lastRemoteSave = Just time
+              }
+            , Cmd.none
+            )
+
+        -- === Desktop ===
+        SavedToFile _ _ ->
+            ( model, Cmd.none )
+
+        ClickedExport ->
+            ( model, Cmd.none )
+
         -- === DOM ===
-        InitialActivation firstCardId ->
-            case vs.viewMode of
-                Normal currId ->
-                    ( model, Cmd.none, [] )
-                        |> andThen (changeMode { to = Normal activeId, instant = True, save = False })
-
-                Editing _ ->
-                    ( model, Cmd.none, [] )
-                        |> andThen
-                            (changeMode
-                                { to = Editing { cardId = firstCardId, field = "" }
-                                , instant = True
-                                , save = False
-                                }
-                            )
-
-                _ ->
-                    ( model, Cmd.none, [] )
-
         DragStarted dragId ->
             let
                 newTree =
@@ -484,29 +569,17 @@ incoming incomingMsg model =
                     getTreeWithPosition dragId model.workingTree.tree
             in
             if List.isEmpty <| getChildren newTree.tree then
-                ( model, Cmd.none, [] )
+                ( model, Cmd.none )
 
             else
-                ( { model | workingTree = newTree, viewState = { vs | draggedTree = draggedTree } }, Cmd.none, [] )
+                ( { model | workingTree = newTree, viewState = { vs | draggedTree = draggedTree } }, Cmd.none )
 
         DragExternalStarted ->
-            case vs.viewMode of
-                Normal _ ->
-                    ( { model
-                        | viewState =
-                            { vs
-                                | dragModel =
-                                    ( Tuple.first vs.dragModel
-                                    , { dropId = Nothing, isDragging = True }
-                                    )
-                            }
-                      }
-                    , Cmd.none
-                    , []
-                    )
+            if model.viewState.viewMode == Normal then
+                ( { model | viewState = { vs | dragModel = ( Tuple.first vs.dragModel, { dropId = Nothing, isDragging = True } ) } }, Cmd.none )
 
-                _ ->
-                    ( model, Cmd.none, [] )
+            else
+                ( model, Cmd.none )
 
         DropExternal dropText ->
             case Tuple.second vs.dragModel |> .dropId of
@@ -518,93 +591,60 @@ incoming incomingMsg model =
                         baseModelCmdTuple =
                             case dropId of
                                 Above cardId ->
-                                    ( modelNoDrag, Cmd.none, [] ) |> insertAbove cardId dropText
+                                    ( modelNoDrag, Cmd.none ) |> insertAbove cardId dropText
 
                                 Into cardId ->
-                                    ( modelNoDrag, Cmd.none, [] ) |> insertChild cardId dropText
+                                    ( modelNoDrag, Cmd.none ) |> insertChild cardId dropText
 
                                 Below cardId ->
-                                    ( modelNoDrag, Cmd.none, [] ) |> insertBelow cardId dropText
+                                    ( modelNoDrag, Cmd.none ) |> insertBelow cardId dropText
                     in
                     baseModelCmdTuple
                         |> closeCard
+                        |> localSave
                         |> addToHistory
 
                 Nothing ->
-                    ( model, Cmd.none, [] )
+                    ( model, Cmd.none )
+
+        FullscreenChanged isFullscreen ->
+            if vs.viewMode == FullscreenEditing && not isFullscreen then
+                exitFullscreen model
+
+            else
+                ( model, Cmd.none )
 
         Paste tree ->
-            normalMode model (pasteBelow activeId tree)
+            normalMode model (pasteBelow vs.active tree)
 
         PasteInto tree ->
-            normalMode model (pasteInto activeId tree)
+            normalMode model (pasteInto vs.active tree)
 
         FieldChanged str ->
-            case vs.viewMode of
-                Editing { cardId } ->
-                    ( { model
-                        | viewState = { vs | viewMode = Editing { cardId = cardId, field = str } }
-                        , dirty = True
-                      }
-                    , send <| SetDirty True
-                    , []
-                    )
-
-                FullscreenEditing { cardId } ->
-                    ( { model
-                        | viewState = { vs | viewMode = FullscreenEditing { cardId = cardId, field = str } }
-                        , dirty = True
-                      }
-                    , send <| SetDirty True
-                    , []
-                    )
-
-                _ ->
-                    ( model, Cmd.none, [] )
-
-        AutoSaveRequested ->
-            ( model, Cmd.none, [] )
-                |> saveCardIfEditing
-
-        FullscreenCardFocused newCardId newCardContent ->
-            case vs.viewMode of
-                FullscreenEditing { cardId } ->
-                    if cardId /= newCardId then
-                        changeMode
-                            { to = FullscreenEditing { cardId = newCardId, field = newCardContent }
-                            , instant = False
-                            , save = True
-                            }
-                            model
-
-                    else
-                        ( model, Cmd.none, [] )
-
-                _ ->
-                    ( model, Cmd.none, [] )
+            ( { model | field = str, dirty = True }, Cmd.none )
 
         TextCursor textCursorInfo ->
             if model.textCursorInfo /= textCursorInfo then
                 ( { model | textCursorInfo = textCursorInfo }
                 , Cmd.none
-                , []
                 )
 
             else
-                ( model, Cmd.none, [] )
+                ( model, Cmd.none )
 
         ClickedOutsideCard ->
-            case vs.viewMode of
-                FullscreenEditing _ ->
-                    ( model, Cmd.none, [] )
+            if model.viewState.viewMode == Editing then
+                ( model, Cmd.none )
+                    |> saveCardIfEditing
+                    |> closeCard
 
-                _ ->
-                    changeMode { to = Normal (getActiveIdFromViewState vs), instant = False, save = True } model
+            else
+                ( model, Cmd.none )
 
         CheckboxClicked cardId checkboxNumber ->
             case getTree cardId model.workingTree.tree of
                 Nothing ->
-                    ( model, Cmd.none, [] )
+                    ( model, Cmd.none )
 
                 Just originalCard ->
                     let
@@ -634,394 +674,300 @@ incoming incomingMsg model =
                         newTree =
                             TreeStructure.update (TreeStructure.Upd cardId newContent) model.workingTree
                     in
-                    ( { model | workingTree = newTree, dirty = True }, Cmd.none, [] )
-                        |> localSave (CTUpd cardId newContent)
+                    ( { model | workingTree = newTree, dirty = True }, Cmd.none )
+                        |> localSave
                         |> addToHistory
 
         -- === UI ===
+        FontSelectorOpen fonts ->
+            ( { model | fonts = Fonts.setSystem fonts model.fonts, fontSelectorOpen = True }
+            , Cmd.none
+            )
+
         Keyboard shortcut ->
             case shortcut of
                 "shift+enter" ->
                     case vs.viewMode of
-                        Normal active ->
-                            changeMode
-                                { to =
-                                    FullscreenEditing
-                                        { cardId = active
-                                        , field = getContent active model.workingTree.tree
-                                        }
-                                , instant = False
-                                , save = False
-                                }
-                                model
+                        Normal ->
+                            ( model
+                            , Cmd.none
+                            )
+                                |> openCardFullscreen vs.active (getContent vs.active model.workingTree.tree)
 
                         _ ->
-                            ( model, Cmd.none, [] )
+                            ( model, Cmd.none )
 
                 "mod+enter" ->
-                    toggleEditing model
+                    saveAndStopEditing model
 
                 "mod+s" ->
-                    saveCardIfEditing ( model, Cmd.none, [] )
+                    saveCardIfEditing ( model, Cmd.none )
 
                 "enter" ->
-                    normalMode model (andThen <| openCard activeId (getContent activeId model.workingTree.tree))
+                    normalMode model (openCard vs.active (getContent vs.active model.workingTree.tree))
 
                 "mod+backspace" ->
-                    normalMode model (deleteCard activeId)
+                    normalMode model (deleteCard vs.active)
 
                 "esc" ->
                     model |> intentCancelCard
 
                 "mod+j" ->
-                    case vs.viewMode of
-                        Normal active ->
-                            insertBelow active "" ( model, Cmd.none, [] )
+                    if model.viewState.viewMode == Normal then
+                        insertBelow vs.active "" ( model, Cmd.none )
 
-                        Editing { cardId } ->
-                            let
-                                ( beforeText, afterText ) =
-                                    model.textCursorInfo.text
-                            in
-                            ( model, Cmd.none, [] )
-                                |> andThen (saveCard { cardId = cardId, field = beforeText })
-                                |> insertBelow activeId afterText
-                                |> setCursorPosition 0
-
-                        FullscreenEditing { cardId } ->
-                            let
-                                ( beforeText, afterText ) =
-                                    model.textCursorInfo.text
-                            in
-                            ( model, Cmd.none, [] )
-                                |> andThen (saveCard { cardId = cardId, field = beforeText })
-                                |> insertBelow activeId afterText
-                                |> setCursorPosition 0
+                    else
+                        let
+                            ( beforeText, afterText ) =
+                                model.textCursorInfo.text
+                        in
+                        ( { model | field = beforeText }
+                        , Cmd.none
+                        )
+                            |> saveCardIfEditing
+                            |> insertBelow vs.active afterText
+                            |> setCursorPosition 0
 
                 "mod+down" ->
-                    normalMode model (insertBelow activeId "")
+                    normalMode model (insertBelow vs.active "")
 
                 "mod+k" ->
-                    case vs.viewMode of
-                        Normal active ->
-                            insertAbove active "" ( model, Cmd.none, [] )
+                    if model.viewState.viewMode == Normal then
+                        insertAbove vs.active "" ( model, Cmd.none )
 
-                        Editing { cardId } ->
-                            let
-                                ( beforeText, afterText ) =
-                                    model.textCursorInfo.text
-                            in
-                            ( { model
-                                | viewState =
-                                    { vs | viewMode = Editing { cardId = cardId, field = afterText } }
-                              }
-                            , Cmd.none
-                            , []
-                            )
-                                |> saveCardIfEditing
-                                |> insertAbove activeId beforeText
-
-                        FullscreenEditing { cardId } ->
-                            let
-                                ( beforeText, afterText ) =
-                                    model.textCursorInfo.text
-                            in
-                            ( { model
-                                | viewState =
-                                    { vs | viewMode = FullscreenEditing { cardId = cardId, field = afterText } }
-                              }
-                            , Cmd.none
-                            , []
-                            )
-                                |> saveCardIfEditing
-                                |> insertAbove activeId beforeText
-
-                "mod+alt+k" ->
-                    case vs.viewMode of
-                        Normal _ ->
-                            ( model
-                            , Cmd.none
-                            , []
-                            )
-
-                        _ ->
-                            ( model
-                            , send (InsertMarkdownLink activeId)
-                            , []
-                            )
+                    else
+                        let
+                            ( beforeText, afterText ) =
+                                model.textCursorInfo.text
+                        in
+                        ( { model | field = afterText }
+                        , Cmd.none
+                        )
+                            |> saveCardIfEditing
+                            |> insertAbove vs.active beforeText
 
                 "mod+up" ->
-                    normalMode model (insertAbove activeId "")
+                    normalMode model (insertAbove vs.active "")
 
                 "mod+l" ->
-                    case vs.viewMode of
-                        Normal active ->
-                            insertChild active "" ( model, Cmd.none, [] )
-
-                        Editing { cardId } ->
-                            let
-                                ( beforeText, afterText ) =
-                                    model.textCursorInfo.text
-                            in
-                            ( { model
-                                | viewState =
-                                    { vs | viewMode = Editing { cardId = cardId, field = beforeText } }
-                              }
-                            , Cmd.none
-                            , []
-                            )
-                                |> saveCardIfEditing
-                                |> insertChild activeId afterText
-                                |> setCursorPosition 0
-
-                        FullscreenEditing { cardId } ->
-                            let
-                                ( beforeText, afterText ) =
-                                    model.textCursorInfo.text
-                            in
-                            ( { model
-                                | viewState =
-                                    { vs | viewMode = FullscreenEditing { cardId = cardId, field = beforeText } }
-                              }
-                            , Cmd.none
-                            , []
-                            )
-                                |> saveCardIfEditing
-                                |> insertChild activeId afterText
-                                |> setCursorPosition 0
+                    let
+                        ( beforeText, afterText ) =
+                            model.textCursorInfo.text
+                    in
+                    ( { model | field = beforeText }
+                    , Cmd.none
+                    )
+                        |> saveCardIfEditing
+                        |> insertChild vs.active afterText
+                        |> setCursorPosition 0
 
                 "mod+right" ->
-                    normalMode model (insertChild activeId "")
+                    normalMode model (insertChild vs.active "")
 
                 "mod+shift+j" ->
-                    normalMode model (mergeDown activeId)
+                    normalMode model (mergeDown vs.active)
 
                 "mod+shift+down" ->
-                    normalMode model (mergeDown activeId)
+                    normalMode model (mergeDown vs.active)
 
                 "mod+shift+k" ->
-                    normalMode model (mergeUp activeId)
+                    normalMode model (mergeUp vs.active)
 
                 "mod+shift+up" ->
-                    normalMode model (mergeUp activeId)
-
-                "alt+i" ->
-                    openAIPrompt model
+                    normalMode model (mergeUp vs.active)
 
                 "h" ->
-                    normalMode model (goLeft activeId)
+                    normalMode model (goLeft vs.active)
 
                 "left" ->
-                    normalMode model (goLeft activeId)
+                    normalMode model (goLeft vs.active)
 
                 "j" ->
-                    normalMode model (goDown activeId)
+                    normalMode model (goDown vs.active)
 
                 "down" ->
                     case vs.viewMode of
-                        Normal active ->
-                            ( model, Cmd.none, [] )
-                                |> goDown active
+                        Normal ->
+                            ( model, Cmd.none )
+                                |> goDown vs.active
 
-                        FullscreenEditing _ ->
+                        FullscreenEditing ->
                             {- check if at end
                                if so, getNextInColumn and openCardFullscreen it
                             -}
-                            ( model, Cmd.none, [] )
+                            ( model, Cmd.none )
 
-                        Editing _ ->
-                            ( model, Cmd.none, [] )
+                        Editing ->
+                            ( model, Cmd.none )
 
                 "k" ->
-                    normalMode model (goUp activeId)
+                    normalMode model (goUp vs.active)
 
                 "up" ->
-                    normalMode model (goUp activeId)
+                    normalMode model (goUp vs.active)
 
                 "l" ->
-                    normalMode model (goRight activeId)
+                    normalMode model (goRight vs.active)
 
                 "right" ->
-                    normalMode model (goRight activeId)
+                    normalMode model (goRight vs.active)
 
                 "alt+up" ->
-                    normalMode model (moveWithin activeId -1)
+                    normalMode model (moveWithin vs.active -1)
 
                 "alt+k" ->
-                    normalMode model (moveWithin activeId -1)
+                    normalMode model (moveWithin vs.active -1)
 
                 "alt+down" ->
-                    normalMode model (moveWithin activeId 1)
+                    normalMode model (moveWithin vs.active 1)
 
                 "alt+j" ->
-                    normalMode model (moveWithin activeId 1)
+                    normalMode model (moveWithin vs.active 1)
 
                 "alt+left" ->
-                    normalMode model (moveLeft activeId)
+                    normalMode model (moveLeft vs.active)
 
                 "alt+h" ->
-                    normalMode model (moveLeft activeId)
+                    normalMode model (moveLeft vs.active)
 
                 "alt+right" ->
-                    normalMode model (moveRight activeId)
+                    normalMode model (moveRight vs.active)
 
                 "alt+l" ->
-                    normalMode model (moveRight activeId)
+                    normalMode model (moveRight vs.active)
 
                 "alt+shift+up" ->
-                    normalMode model (moveWithin activeId -5)
+                    normalMode model (moveWithin vs.active -5)
 
                 "alt+shift+down" ->
-                    normalMode model (moveWithin activeId 5)
+                    normalMode model (moveWithin vs.active 5)
 
                 "alt+pageup" ->
-                    normalMode model (moveWithin activeId -999999)
+                    normalMode model (moveWithin vs.active -999999)
 
                 "alt+pagedown" ->
-                    normalMode model (moveWithin activeId 999999)
+                    normalMode model (moveWithin vs.active 999999)
 
                 "home" ->
-                    normalMode model (goToTopOfColumn activeId)
+                    normalMode model (goToTopOfColumn vs.active)
 
                 "end" ->
-                    normalMode model (goToBottomOfColumn activeId)
+                    normalMode model (goToBottomOfColumn vs.active)
 
                 "pageup" ->
-                    normalMode model (goToTopOfGroup activeId True)
+                    normalMode model (goToTopOfGroup vs.active True)
 
                 "pagedown" ->
-                    normalMode model (goToBottomOfGroup activeId True)
+                    normalMode model (goToBottomOfGroup vs.active True)
 
                 "mod+x" ->
-                    normalMode model (cut activeId)
+                    normalMode model (cut vs.active)
 
                 "mod+c" ->
-                    normalMode model (copy activeId)
+                    normalMode model (copy vs.active)
 
                 "mod+b" ->
                     case vs.viewMode of
-                        Normal _ ->
+                        Normal ->
                             ( model
                             , Cmd.none
-                            , []
                             )
 
                         _ ->
                             ( model
-                            , send (TextSurround activeId "**")
-                            , []
+                            , send (TextSurround vs.active "**")
                             )
 
                 "mod+i" ->
                     case vs.viewMode of
-                        Normal _ ->
+                        Normal ->
                             ( model
                             , Cmd.none
-                            , []
                             )
 
                         _ ->
                             ( model
-                            , send (TextSurround activeId "*")
-                            , []
+                            , send (TextSurround vs.active "*")
                             )
 
                 "/" ->
                     case vs.viewMode of
-                        Normal _ ->
+                        Normal ->
                             ( model
                             , Task.attempt (\_ -> NoOp) (Browser.Dom.focus "search-input")
-                            , []
                             )
 
                         _ ->
                             ( model
                             , Cmd.none
-                            , []
                             )
 
-                "z" ->
-                    case vs.viewMode of
-                        Normal _ ->
-                            let
-                                scrollCmd =
-                                    case getTree activeId model.workingTree.tree of
-                                        Just activeTree ->
-                                            send
-                                                (ScrollCards
-                                                    (activeId :: vs.activePast)
-                                                    (getScrollPositions activeTree vs.activePast model.workingTree.tree)
-                                                    (getDepth 0 model.workingTree.tree activeId)
-                                                    True
-                                                    True
-                                                )
+                "w" ->
+                    {--
+                            case ( vs.viewMode, model.modalState ) of
+                                ( Normal, NoModal ) ->
+                                    ( { model | modalState = Wordcount }, Cmd.none )
 
-                                        Nothing ->
-                                            Cmd.none
-                            in
-                            ( { model | cardsCollapsed = not model.cardsCollapsed }, scrollCmd, [] )
+                                ( Normal, Wordcount ) ->
+                                    ( { model | modalState = NoModal }, Cmd.none )
 
-                        _ ->
-                            ( model
-                            , Cmd.none
-                            , []
-                            )
+                                _ ->
+                                    --}
+                    ( model, Cmd.none )
+
+                "?" ->
+                    {--
+                            case ( vs.viewMode, model.modalState ) of
+                                ( Normal, HelpScreen ) ->
+                                    ( { model | modalState = NoModal }, Cmd.none )
+
+                                ( Normal, _ ) ->
+                                    ( { model | modalState = HelpScreen }, Cmd.none )
+
+                                _ ->
+                                    ( model, Cmd.none )
+                            --}
+                    ( model, Cmd.none )
 
                 _ ->
                     ( model
                     , Cmd.none
-                    , []
                     )
 
         WillPrint ->
-            ( model, Cmd.none, [] )
+            ( model, Cmd.none )
 
         -- === Misc ===
         RecvCollabState collabState ->
             let
-                assignedInts =
-                    List.map .int vs.collaborators
-
-                nextAvailableInt =
-                    List.range 0 (List.length vs.collaborators + 1)
-                        |> List.filter (\i -> not (List.member i assignedInts))
-                        |> List.head
-                        |> Maybe.withDefault 0
-
                 newCollabs =
                     if List.member collabState.uid (vs.collaborators |> List.map .uid) then
                         vs.collaborators
                             |> List.map
                                 (\c ->
                                     if c.uid == collabState.uid then
-                                        { collabState | int = c.int }
+                                        collabState
 
                                     else
                                         c
                                 )
 
                     else
-                        { collabState | int = nextAvailableInt } :: vs.collaborators
+                        collabState :: vs.collaborators
+
+                newTree =
+                    case collabState.mode of
+                        CollabEditing editId ->
+                            TreeStructure.update (TreeStructure.Upd editId collabState.field) model.workingTree
+
+                        _ ->
+                            model.workingTree
             in
             ( { model
-                | viewState = { vs | collaborators = newCollabs }
+                | workingTree = newTree
+                , viewState = { vs | collaborators = newCollabs }
               }
             , Cmd.none
-            , []
-            )
-
-        RecvCollabUsers users ->
-            ( { model
-                | viewState =
-                    { vs
-                        | collaborators =
-                            users
-                                |> List.sortBy .uid
-                                |> List.indexedMap (\i u -> { u | int = i })
-                    }
-              }
-            , Cmd.none
-            , []
             )
 
         CollaboratorDisconnected uid ->
@@ -1030,224 +976,118 @@ incoming incomingMsg model =
                     { vs | collaborators = vs.collaborators |> List.filter (\c -> c.uid /= uid) }
               }
             , Cmd.none
-            , []
             )
 
         -- === INTEGRATION TEST HOOKS ===
         TestTextImportLoaded _ ->
-            ( model, Cmd.none, [] )
-
-
-andThen : (ModelData -> ( ModelData, Cmd Msg, List MsgToParent )) -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-andThen f ( model, cmd, msgs ) =
-    let
-        ( newModel, nextCmd, newMsgs ) =
-            f model
-    in
-    ( newModel, Cmd.batch [ cmd, nextCmd ], msgs ++ newMsgs )
+            ( model, Cmd.none )
 
 
 
 -- === Card Activation ===
 
 
-changeMode : { to : ViewMode, instant : Bool, save : Bool } -> ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
-changeMode { to, instant, save } model =
+activate : String -> Bool -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+activate tryId instant ( model, prevCmd ) =
     let
         vs =
             model.viewState
-
-        oldId =
-            getActiveIdFromViewMode vs.viewMode
-
-        tryId =
-            getActiveIdFromViewMode to
-
-        targetTree_ =
-            getTree (getActiveIdFromViewMode to) model.workingTree.tree
     in
-    case targetTree_ of
-        Just targetTree ->
-            let
-                newPast =
-                    if tryId == oldId then
-                        vs.activePast
+    if tryId == "0" then
+        ( model
+        , prevCmd
+        )
 
-                    else
-                        oldId :: vs.activePast |> List.take 40
+    else
+        let
+            activeTree__ =
+                getTree tryId model.workingTree.tree
 
-                id =
-                    targetTree.id
+            activeTree_ =
+                case activeTree__ of
+                    Just aTree ->
+                        Just aTree
 
-                desc =
-                    targetTree
-                        |> getDescendants
-                        |> List.map .id
+                    Nothing ->
+                        getFirstCard model.workingTree.tree
+        in
+        case activeTree_ of
+            Nothing ->
+                ( model, prevCmd )
 
-                anc =
-                    getAncestors model.workingTree.tree targetTree []
-                        |> List.map .id
-
-                scrollPositions =
-                    getScrollPositions targetTree newPast model.workingTree.tree
-
-                colIdx =
-                    getDepth 0 model.workingTree.tree targetTree.id
-
-                newModel newVm =
-                    { model
-                        | viewState =
-                            { vs
-                                | viewMode = newVm
-                                , activePast = newPast
-                                , descendants = desc
-                                , ancestors = anc
-                            }
-                    }
-
-                saveIfAsked eD =
-                    if save then
-                        andThen (saveCard eD)
-
-                    else
-                        identity
-
-                scrollCmd =
-                    send (ScrollCards (id :: newPast) scrollPositions colIdx instant False)
-
-                updateCollabState : Bool -> CollabStateMode -> ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
-                updateCollabState condition newCollabState prevModel =
-                    ( prevModel
-                    , if instant || condition then
-                        send (SendCollabState (collabStateEncoder newCollabState))
-
-                      else
-                        Cmd.none
-                    , []
-                    )
-            in
-            case ( vs.viewMode, to ) of
-                ( Normal prevId, Normal newId ) ->
-                    ( newModel to
-                    , scrollCmd
-                    , []
-                    )
-                        |> andThen
-                            (updateCollabState (prevId /= newId)
-                                (CollabActive newId)
-                            )
-
-                ( Editing oldEditData, Normal newId ) ->
-                    ( newModel to, scrollCmd, [] )
-                        |> saveIfAsked oldEditData
-                        |> andThen
-                            (updateCollabState True
-                                (CollabActive newId)
-                            )
-
-                ( FullscreenEditing oldEditData, Normal newId ) ->
-                    ( newModel to, scrollCmd, [] )
-                        |> saveIfAsked oldEditData
-                        |> andThen
-                            (updateCollabState True
-                                (CollabActive newId)
-                            )
-
-                ( Normal _, Editing newEditData ) ->
-                    ( newModel to
-                    , Cmd.batch [ focus newEditData.cardId, scrollCmd ]
-                    , []
-                    )
-                        |> preventIfBlocked model
-                        |> andThen
-                            (updateCollabState True
-                                (CollabEditing newEditData.cardId)
-                            )
-
-                ( Editing oldEditData, Editing newEditData ) ->
-                    ( newModel to
-                    , Cmd.batch [ focus newEditData.cardId, scrollCmd ]
-                    , []
-                    )
-                        |> preventIfBlocked model
-                        |> andThen
-                            (updateCollabState (oldEditData.cardId /= newEditData.cardId)
-                                (CollabEditing newEditData.cardId)
-                            )
-
-                ( FullscreenEditing oldEditData, Editing newEditData ) ->
-                    ( newModel to
-                    , Cmd.batch [ focus newEditData.cardId, scrollCmd ]
-                    , []
-                    )
-                        |> saveIfAsked oldEditData
-                        |> andThen
-                            (updateCollabState (oldEditData.cardId /= newEditData.cardId)
-                                (CollabEditing newEditData.cardId)
-                            )
-
-                ( Normal _, FullscreenEditing newEditData ) ->
-                    ( newModel to, focus newEditData.cardId, [] )
-                        |> andThen
-                            (updateCollabState True
-                                (CollabEditing newEditData.cardId)
-                            )
-
-                ( Editing oldEditData, FullscreenEditing newEditData ) ->
-                    ( newModel to, focus newEditData.cardId, [] )
-                        |> saveIfAsked oldEditData
-                        |> andThen
-                            (updateCollabState (oldEditData.cardId /= newEditData.cardId)
-                                (CollabEditing newEditData.cardId)
-                            )
-
-                ( FullscreenEditing oldEditData, FullscreenEditing newEditData ) ->
-                    ( newModel to, focus newEditData.cardId, [] )
-                        |> saveIfAsked oldEditData
-                        |> andThen
-                            (updateCollabState (oldEditData.cardId /= newEditData.cardId)
-                                (CollabEditing newEditData.cardId)
-                            )
-
-        Nothing ->
-            case getFirstCard model.workingTree.tree of
-                Just backupTree ->
-                    changeMode { to = Normal backupTree.id, instant = instant, save = False } model
-
-                Nothing ->
-                    ( model, Cmd.none, [] )
-
-
-activate : String -> Bool -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-activate tryId instant ( model, prevCmd, prevMsgsToParent ) =
-    changeMode { to = Normal tryId, instant = instant, save = False } model
-        |> andThen (\m -> ( m, prevCmd, prevMsgsToParent ))
-
-
-goLeft : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goLeft id ( model, prevCmd, prevMsgsToParent ) =
-    let
-        targetId =
-            getParent id model.workingTree.tree
-                |> Maybe.withDefault defaultTree
-                |> .id
-                |> (\pId ->
-                        if pId == "0" then
-                            id
+            Just activeTree ->
+                let
+                    newPast =
+                        if tryId == vs.active then
+                            vs.activePast
 
                         else
-                            pId
-                   )
+                            vs.active :: vs.activePast |> List.take 40
+
+                    id =
+                        activeTree.id
+
+                    desc =
+                        activeTree
+                            |> getDescendants
+                            |> List.map .id
+
+                    anc =
+                        getAncestors model.workingTree.tree activeTree []
+                            |> List.map .id
+
+                    newField =
+                        activeTree.content
+
+                    newModel =
+                        { model
+                            | viewState =
+                                { vs
+                                    | active = id
+                                    , activePast = newPast
+                                    , descendants = desc
+                                    , ancestors = anc
+                                }
+                            , field = newField
+                        }
+                in
+                case vs.viewMode of
+                    FullscreenEditing ->
+                        ( newModel
+                        , Cmd.batch [ prevCmd, send <| ScrollFullscreenCards id ]
+                        )
+
+                    _ ->
+                        let
+                            scrollPositions =
+                                getScrollPositions activeTree newPast model.workingTree.tree
+
+                            colIdx =
+                                getDepth 0 model.workingTree.tree activeTree.id
+                        in
+                        ( newModel
+                        , Cmd.batch
+                            [ prevCmd
+                            , send
+                                (ScrollCards (id :: newPast) scrollPositions colIdx instant)
+                            ]
+                        )
+
+
+goLeft : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goLeft id ( model, prevCmd ) =
+    let
+        targetId =
+            getParent id model.workingTree.tree |> Maybe.withDefault defaultTree |> .id
     in
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
-        |> andThen (changeMode { to = Normal targetId, instant = False, save = False })
+        |> activate targetId False
 
 
-goDown : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goDown id ( model, prevCmd, prevMsgsToParent ) =
+goDown : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goDown id ( model, prevCmd ) =
     let
         targetId =
             case getNextInColumn id model.workingTree.tree of
@@ -1259,13 +1099,12 @@ goDown id ( model, prevCmd, prevMsgsToParent ) =
     in
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
-        |> andThen (changeMode { to = Normal targetId, instant = False, save = False })
+        |> activate targetId False
 
 
-goUp : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goUp id ( model, prevCmd, prevMsgsToParent ) =
+goUp : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goUp id ( model, prevCmd ) =
     let
         targetId =
             case getPrevInColumn id model.workingTree.tree of
@@ -1277,13 +1116,12 @@ goUp id ( model, prevCmd, prevMsgsToParent ) =
     in
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
-        |> andThen (changeMode { to = Normal targetId, instant = False, save = False })
+        |> activate targetId False
 
 
-goRight : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goRight id ( model, prevCmd, prevMsgsToParent ) =
+goRight : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goRight id ( model, prevCmd ) =
     let
         vs =
             model.viewState
@@ -1310,195 +1148,173 @@ goRight id ( model, prevCmd, prevMsgsToParent ) =
         Nothing ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
 
         Just _ ->
             if List.length childrenIds == 0 then
                 ( model
                 , prevCmd
-                , prevMsgsToParent
                 )
 
             else
                 ( model
                 , prevCmd
-                , prevMsgsToParent
                 )
-                    |> andThen
-                        (changeMode
-                            { to = Normal prevActiveOfChildren
-                            , instant = False
-                            , save = False
-                            }
-                        )
+                    |> activate prevActiveOfChildren False
 
 
 
 -- === Card Editing  ===
 
 
-saveCard : { cardId : String, field : String } -> ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
-saveCard { cardId, field } model =
-    let
-        newTree =
-            TreeStructure.update (TreeStructure.Upd cardId field) model.workingTree
-    in
-    if newTree.tree /= model.workingTree.tree then
-        ( { model
-            | workingTree = newTree
-          }
-        , Cmd.none
-        , []
-        )
-            |> localSave (CTUpd cardId field)
-            |> addToHistory
-
-    else
-        ( { model | dirty = False }
-        , send <| SetDirty False
-        , []
-        )
-
-
-toggleEditing : ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
-toggleEditing model =
+saveAndStopEditing : Model -> ( Model, Cmd Msg )
+saveAndStopEditing model =
     let
         vs =
             model.viewState
     in
     case vs.viewMode of
-        Normal active ->
-            let
-                isLocked =
-                    vs.collaborators
-                        |> List.filter (\c -> c.mode == CollabEditing active)
-                        |> (not << List.isEmpty)
-            in
-            if isLocked then
-                ( model
-                , Cmd.none
-                , ParentAddToast Temporary (Toast Warning "Card is being edited by someone else.") :: []
-                )
-                    |> preventIfBlocked model
+        Normal ->
+            ( model, Cmd.none ) |> openCard vs.active (getContent vs.active model.workingTree.tree)
 
-            else
-                changeMode
-                    { to = Editing { cardId = active, field = getContent active model.workingTree.tree }
-                    , instant = True
-                    , save = True
-                    }
-                    model
+        Editing ->
+            ( model, Cmd.none )
+                |> saveCardIfEditing
+                |> closeCard
 
-        Editing { cardId, field } ->
-            changeMode
-                { to = Normal cardId
-                , instant = True
-                , save = True
-                }
-                model
-
-        FullscreenEditing { cardId, field } ->
-            changeMode
-                { to = Normal cardId
-                , instant = True
-                , save = True
-                }
-                model
+        FullscreenEditing ->
+            ( model, Cmd.none )
+                |> saveCardIfEditing
+                |> closeCard
+                |> activate model.viewState.active True
 
 
-saveCardIfEditing : ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-saveCardIfEditing ( model, prevCmd, prevParentMsgs ) =
+saveCardIfEditing : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+saveCardIfEditing ( model, prevCmd ) =
     let
         vs =
             model.viewState
-
-        activeId =
-            getActiveId (Model model)
     in
     case vs.viewMode of
-        Normal _ ->
+        Normal ->
             ( model
             , prevCmd
-            , prevParentMsgs
             )
 
-        Editing { field } ->
+        _ ->
             let
                 newTree =
-                    TreeStructure.update (TreeStructure.Upd activeId field) model.workingTree
+                    TreeStructure.update (TreeStructure.Upd vs.active model.field) model.workingTree
             in
             if newTree.tree /= model.workingTree.tree then
                 ( { model
                     | workingTree = newTree
                   }
                 , prevCmd
-                , prevParentMsgs
                 )
-                    |> localSave (CTUpd activeId field)
+                    |> localSave
                     |> addToHistory
 
             else
                 ( { model | dirty = False }
                 , Cmd.batch [ prevCmd, send <| SetDirty False ]
-                , prevParentMsgs
-                )
-
-        FullscreenEditing { field } ->
-            let
-                newTree =
-                    TreeStructure.update (TreeStructure.Upd activeId field) model.workingTree
-            in
-            if newTree.tree /= model.workingTree.tree then
-                ( { model
-                    | workingTree = newTree
-                  }
-                , prevCmd
-                , prevParentMsgs
-                )
-                    |> localSave (CTUpd activeId field)
-                    |> addToHistory
-
-            else
-                ( { model | dirty = False }
-                , Cmd.batch [ prevCmd, send <| SetDirty False ]
-                , prevParentMsgs
                 )
 
 
-openCard : String -> String -> ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
-openCard id str model =
-    let
-        isLocked =
-            model.viewState.collaborators
-                |> List.filter (\c -> c.mode == CollabEditing id)
-                |> (not << List.isEmpty)
-    in
-    if isLocked then
-        ( model
-        , Cmd.none
-        , ParentAddToast Temporary (Toast Warning "Card is being edited by someone else.") :: []
-        )
-            |> preventIfBlocked model
-
-    else
-        changeMode { to = Editing { cardId = id, field = str }, instant = False, save = False } model
-
-
-closeCard : ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-closeCard ( model, prevCmd, prevMsgsToParent ) =
+openCard : String -> String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+openCard id str ( model, prevCmd ) =
     let
         vs =
             model.viewState
 
-        activeId =
-            getActiveId (Model model)
+        ( newViewMode, maybeScroll ) =
+            if vs.viewMode == FullscreenEditing then
+                ( FullscreenEditing, send <| ScrollFullscreenCards id )
+
+            else
+                ( Editing, Cmd.none )
+
+        isLocked =
+            vs.collaborators
+                |> List.filter (\c -> c.mode == CollabEditing id)
+                |> (not << List.isEmpty)
+
+        isHistoryView =
+            {--TODO: case model.headerMenu of
+                HistoryView _ ->
+                    True
+
+                _ ->
+                    --}
+            False
     in
-    ( { model | viewState = { vs | viewMode = Normal activeId } }, prevCmd, prevMsgsToParent )
+    if isHistoryView then
+        ( model
+        , Cmd.batch [ prevCmd, send (Alert "Cannot edit while browsing version history.") ]
+        )
+
+    else if isLocked then
+        ( model
+        , Cmd.batch [ prevCmd, send (Alert "Card is being edited by someone else.") ]
+        )
+
+    else
+        ( { model
+            | viewState = { vs | active = id, viewMode = newViewMode }
+            , field = str
+          }
+        , Cmd.batch [ prevCmd, focus id, maybeScroll ]
+        )
 
 
-deleteCard : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-deleteCard id ( model, prevCmd, prevMsgsToParent ) =
+openCardFullscreen : String -> String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+openCardFullscreen id str ( model, prevCmd ) =
+    ( model, prevCmd )
+        |> openCard id str
+        |> (\( m, c ) ->
+                let
+                    vs =
+                        m.viewState
+                in
+                ( { m | viewState = { vs | active = id, viewMode = FullscreenEditing }, field = str }
+                , Cmd.batch [ c, focus id ]
+                )
+           )
+
+
+enterFullscreen : Model -> ( Model, Cmd Msg )
+enterFullscreen model =
+    let
+        vs =
+            model.viewState
+    in
+    ( { model | viewState = { vs | viewMode = FullscreenEditing } }
+    , focus vs.active
+    )
+
+
+exitFullscreen : Model -> ( Model, Cmd Msg )
+exitFullscreen model =
+    let
+        vs =
+            model.viewState
+    in
+    ( { model | viewState = { vs | viewMode = Editing } }
+    , Cmd.batch [ send <| SetField vs.active model.field, focus vs.active ]
+    )
+
+
+closeCard : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+closeCard ( model, prevCmd ) =
+    let
+        vs =
+            model.viewState
+    in
+    ( { model | viewState = { vs | viewMode = Normal }, field = "" }, prevCmd )
+
+
+deleteCard : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+deleteCard id ( model, prevCmd ) =
     let
         vs =
             model.viewState
@@ -1533,17 +1349,13 @@ deleteCard id ( model, prevCmd, prevMsgsToParent ) =
     in
     if isLocked then
         ( model
-        , prevCmd
-        , ParentAddToast Temporary (Toast Warning "Card is being edited by someone else.") :: prevMsgsToParent
+        , send (Alert "Card is being edited by someone else.")
         )
-            |> preventIfBlocked model
 
     else if isLastChild then
         ( model
-        , prevCmd
-        , ParentAddToast Temporary (Toast Warning "Cannot delete last card.") :: prevMsgsToParent
+        , send (Alert "Cannot delete last card.")
         )
-            |> preventIfBlocked model
 
     else
         ( { model
@@ -1551,34 +1363,30 @@ deleteCard id ( model, prevCmd, prevMsgsToParent ) =
             , dirty = True
           }
         , Cmd.batch [ prevCmd, send <| SetDirty True ]
-        , prevMsgsToParent
         )
-            |> localSave (CTRmv id)
+            |> activate nextToActivate False
+            |> localSave
             |> addToHistory
-            |> preventIfBlocked model
-            |> andThen (changeMode { to = Normal nextToActivate, instant = False, save = False })
 
 
-goToTopOfColumn : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goToTopOfColumn id ( model, prevCmd, prevMsgsToParent ) =
+goToTopOfColumn : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goToTopOfColumn id ( model, prevCmd ) =
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
         |> activate (getFirstInColumn id model.workingTree.tree) False
 
 
-goToBottomOfColumn : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goToBottomOfColumn id ( model, prevCmd, prevMsgsToParent ) =
+goToBottomOfColumn : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goToBottomOfColumn id ( model, prevCmd ) =
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
         |> activate (getLastInColumn id model.workingTree.tree) False
 
 
-goToTopOfGroup : String -> Bool -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goToTopOfGroup id fallToNextGroup ( model, prevCmd, prevMsgsToParent ) =
+goToTopOfGroup : String -> Bool -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goToTopOfGroup id fallToNextGroup ( model, prevCmd ) =
     let
         topSibling =
             case
@@ -1605,13 +1413,12 @@ goToTopOfGroup id fallToNextGroup ( model, prevCmd, prevMsgsToParent ) =
     in
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
         |> activate targetId False
 
 
-goToBottomOfGroup : String -> Bool -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-goToBottomOfGroup id fallToNextGroup ( model, prevCmd, prevMsgsToParent ) =
+goToBottomOfGroup : String -> Bool -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+goToBottomOfGroup id fallToNextGroup ( model, prevCmd ) =
     let
         bottomSibling =
             case
@@ -1639,44 +1446,43 @@ goToBottomOfGroup id fallToNextGroup ( model, prevCmd, prevMsgsToParent ) =
     in
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
         |> activate targetId False
 
 
-cancelCard : ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-cancelCard ( model, prevCmd, prevMsgsToParent ) =
+cancelCard : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+cancelCard ( model, prevCmd ) =
     let
-        activeId =
-            getActiveId (Model model)
+        vs =
+            model.viewState
     in
-    ( model, prevCmd, prevMsgsToParent )
-        |> andThen (changeMode { to = Normal activeId, instant = True, save = False })
+    ( { model
+        | viewState = { vs | viewMode = Normal }
+        , field = ""
+      }
+    , prevCmd
+    )
+        |> activate vs.active True
 
 
-intentCancelCard : ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
+intentCancelCard : Model -> ( Model, Cmd Msg )
 intentCancelCard model =
     let
         vs =
             model.viewState
 
-        activeId =
-            getActiveId (Model model)
-
         originalContent =
-            getContent activeId model.workingTree.tree
+            getContent vs.active model.workingTree.tree
     in
     case vs.viewMode of
-        Normal _ ->
+        Normal ->
             ( model
             , Cmd.none
-            , []
             )
 
         _ ->
             ( model
-            , send (ConfirmCancelCard activeId originalContent (tr (GlobalData.language model.globalData) AreYouSureCancel))
-            , []
+            , send (ConfirmCancelCard vs.active originalContent (tr (GlobalData.language model.globalData) AreYouSureCancel))
             )
 
 
@@ -1684,51 +1490,31 @@ intentCancelCard model =
 -- === Card Insertion  ===
 
 
-insert : String -> Int -> String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-insert pid pos initText ( model, prevCmd, prevMsgsToParent ) =
+insert : String -> Int -> String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+insert pid pos initText ( model, prevCmd ) =
     let
-        ( newIdString, newSeed ) =
-            Random.step (stringGenerator 24) (GlobalData.seed model.globalData)
+        ( newId, newSeed ) =
+            Random.step randomPositiveInt (GlobalData.seed model.globalData)
 
-        newViewMode =
-            case model.viewState.viewMode of
-                FullscreenEditing _ ->
-                    FullscreenEditing { cardId = newIdString, field = initText }
-
-                _ ->
-                    Editing { cardId = newIdString, field = initText }
+        newIdString =
+            "node-" ++ (newId |> String.fromInt)
     in
-    ( { model
-        | workingTree = TreeStructure.update (TreeStructure.Ins newIdString initText pid pos) model.workingTree
-        , globalData = GlobalData.setSeed newSeed model.globalData
-      }
-    , prevCmd
-    , prevMsgsToParent
-        ++ [ LocalSave
-                (CTIns newIdString
-                    initText
-                    (if pid == "0" then
-                        Nothing
+    if not model.isExpired then
+        ( { model
+            | workingTree = TreeStructure.update (TreeStructure.Ins newIdString initText pid pos) model.workingTree
+            , globalData = GlobalData.setSeed newSeed model.globalData
+          }
+        , prevCmd
+        )
+            |> openCard newIdString initText
+            |> activate newIdString False
 
-                     else
-                        Just pid
-                    )
-                    pos
-                )
-           ]
-    )
-        |> andThen
-            (changeMode
-                { to = newViewMode
-                , instant = False
-                , save = False
-                }
-            )
-        |> preventIfBlocked model
+    else
+        ( model, send <| Alert "Your Free Trial is Over.\n\nYou can view and edit your existing cards, but cannot create new ones." )
 
 
-insertRelative : String -> Int -> String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-insertRelative id delta initText ( model, prevCmd, prevMsgsToParent ) =
+insertRelative : String -> Int -> String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+insertRelative id delta initText ( model, prevCmd ) =
     let
         idx =
             getIndex id model.workingTree.tree |> Maybe.withDefault 999999
@@ -1740,126 +1526,114 @@ insertRelative id delta initText ( model, prevCmd, prevMsgsToParent ) =
         Just pid ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
                 |> insert pid (idx + delta) initText
 
         Nothing ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
 
 
-insertAbove : String -> String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
+insertAbove : String -> String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 insertAbove id initText tup =
     insertRelative id 0 initText tup
 
 
-insertBelow : String -> String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-insertBelow id initText ( model, prevCmd, prevMsgsToParent ) =
-    insertRelative id 1 initText ( model, prevCmd, prevMsgsToParent )
+insertBelow : String -> String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+insertBelow id initText ( model, prevCmd ) =
+    insertRelative id 1 initText ( model, prevCmd )
 
 
-insertChild : String -> String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-insertChild id initText ( model, prevCmd, prevMsgsToParent ) =
+insertChild : String -> String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+insertChild id initText ( model, prevCmd ) =
     ( model
     , prevCmd
-    , prevMsgsToParent
     )
         |> insert id 999999 initText
 
 
-merge : Bool -> String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-merge isUp id ( model, prevCmd, prevMsgsToParent ) =
+mergeUp : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+mergeUp id ( model, prevCmd ) =
     let
         currentTree_ =
             getTree id model.workingTree.tree
 
-        otherTree_ =
-            if isUp then
-                getPrevInColumn id model.workingTree.tree
-
-            else
-                getNextInColumn id model.workingTree.tree
+        prevTree_ =
+            getPrevInColumn id model.workingTree.tree
     in
-    case ( currentTree_, otherTree_ ) of
+    case ( currentTree_, prevTree_ ) of
         ( Just currentTree, Just prevTree ) ->
             let
                 mergedTree =
                     model.workingTree
-                        |> TreeStructure.update (TreeStructure.Mrg currentTree prevTree isUp)
+                        |> TreeStructure.update (TreeStructure.Mrg currentTree prevTree True)
             in
             ( { model
                 | workingTree = mergedTree
               }
             , prevCmd
-            , prevMsgsToParent
             )
-                |> localSave (CTMrg currentTree.id prevTree.id isUp)
+                |> activate prevTree.id False
+                |> localSave
                 |> addToHistory
-                |> andThen (changeMode { to = Normal currentTree.id, instant = True, save = False })
 
         _ ->
-            ( model, prevCmd, prevMsgsToParent )
+            ( model, prevCmd )
 
 
-mergeUp : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-mergeUp id ( model, prevCmd, prevMsgsToParent ) =
-    merge True id ( model, prevCmd, prevMsgsToParent )
+mergeDown : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+mergeDown id ( model, prevCmd ) =
+    let
+        currentTree_ =
+            getTree id model.workingTree.tree
 
-
-mergeDown : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-mergeDown id ( model, prevCmd, prevMsgsToParent ) =
-    merge False id ( model, prevCmd, prevMsgsToParent )
-
-
-setCursorPosition : Int -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-setCursorPosition pos ( model, prevCmd, prevMsgsToParent ) =
-    ( model, Cmd.batch [ prevCmd, send (SetCursorPosition pos) ], prevMsgsToParent )
-
-
-openAIPrompt : ModelData -> ( ModelData, Cmd Msg, List MsgToParent )
-openAIPrompt model =
-    case model.viewState.viewMode of
-        Normal _ ->
-            ( model
-            , Cmd.none
-            , [ OpenAIPrompt ]
+        nextTree_ =
+            getNextInColumn id model.workingTree.tree
+    in
+    case ( currentTree_, nextTree_ ) of
+        ( Just currentTree, Just nextTree ) ->
+            let
+                mergedTree =
+                    model.workingTree
+                        |> TreeStructure.update (TreeStructure.Mrg currentTree nextTree False)
+            in
+            ( { model
+                | workingTree = mergedTree
+              }
+            , prevCmd
             )
+                |> activate nextTree.id False
+                |> localSave
+                |> addToHistory
 
         _ ->
-            ( model, Cmd.none, [] )
+            ( model, prevCmd )
+
+
+setCursorPosition : Int -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+setCursorPosition pos ( model, prevCmd ) =
+    ( model, Cmd.batch [ prevCmd, send (SetCursorPosition pos) ] )
 
 
 
 -- === Card Moving  ===
 
 
-move : Tree -> String -> Int -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-move subtree pid pos ( model, prevCmd, prevMsgsToParent ) =
+move : Tree -> String -> Int -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+move subtree pid pos ( model, prevCmd ) =
     ( { model
         | workingTree = TreeStructure.update (TreeStructure.Mov subtree pid pos) model.workingTree
       }
     , prevCmd
-    , prevMsgsToParent
     )
         |> activate subtree.id False
         |> localSave
-            (CTMov subtree.id
-                (if pid == "0" then
-                    Nothing
-
-                 else
-                    Just pid
-                )
-                pos
-            )
         |> addToHistory
 
 
-moveWithin : String -> Int -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-moveWithin id delta ( model, prevCmd, prevMsgsToParent ) =
+moveWithin : String -> Int -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+moveWithin id delta ( model, prevCmd ) =
     let
         tree_ =
             getTree id model.workingTree.tree
@@ -1875,19 +1649,17 @@ moveWithin id delta ( model, prevCmd, prevMsgsToParent ) =
         ( Just tree, Just pid, Just refIdx ) ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
                 |> move tree pid (refIdx + delta |> Basics.max 0)
 
         _ ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
 
 
-moveLeft : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-moveLeft id ( model, prevCmd, prevMsgsToParent ) =
+moveLeft : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+moveLeft id ( model, prevCmd ) =
     let
         tree_ =
             getTree id model.workingTree.tree
@@ -1908,19 +1680,17 @@ moveLeft id ( model, prevCmd, prevMsgsToParent ) =
         ( Just tree, Just gpId, Just refIdx ) ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
                 |> move tree gpId (refIdx + 1)
 
         _ ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
 
 
-moveRight : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-moveRight id ( model, prevCmd, prevMsgsToParent ) =
+moveRight : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+moveRight id ( model, prevCmd ) =
     let
         tree_ =
             getTree id model.workingTree.tree
@@ -1933,14 +1703,12 @@ moveRight id ( model, prevCmd, prevMsgsToParent ) =
         ( Just tree, Just prev ) ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
                 |> move tree prev 999999
 
         _ ->
             ( model
             , prevCmd
-            , prevMsgsToParent
             )
 
 
@@ -1948,8 +1716,8 @@ moveRight id ( model, prevCmd, prevMsgsToParent ) =
 -- === Card Cut/Copy/Paste ===
 
 
-cut : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-cut id ( model, prevCmd, prevMsgsToParent ) =
+cut : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+cut id ( model, prevCmd ) =
     let
         parent_ =
             getParent id model.workingTree.tree
@@ -1970,18 +1738,17 @@ cut id ( model, prevCmd, prevMsgsToParent ) =
     in
     if isLastChild then
         ( model
-        , prevCmd
-        , ParentAddToast Temporary (Toast Warning "Cannot cut last card") :: prevMsgsToParent
+        , send (Alert "Cannot cut last card")
         )
 
     else
-        ( model, prevCmd, prevMsgsToParent )
+        ( model, prevCmd )
             |> copy id
             |> deleteCard id
 
 
-copy : String -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-copy id ( model, prevCmd, prevMsgsToParent ) =
+copy : String -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+copy id ( model, prevCmd ) =
     let
         vs =
             model.viewState
@@ -2001,37 +1768,29 @@ copy id ( model, prevCmd, prevMsgsToParent ) =
             Nothing ->
                 Cmd.none
         ]
-    , prevMsgsToParent
     )
 
 
-paste : Tree -> String -> Int -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-paste subtree pid pos ( model, prevCmd, prevMsgsToParent ) =
+paste : Tree -> String -> Int -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+paste subtree pid pos ( model, prevCmd ) =
     ( { model
         | workingTree = TreeStructure.update (TreeStructure.Paste subtree pid pos) model.workingTree
       }
     , prevCmd
-    , prevMsgsToParent
     )
-        |> andThen (changeMode { to = Normal subtree.id, instant = True, save = False })
+        |> activate subtree.id False
         |> localSave
-            (if pid == "0" then
-                CTBlk subtree Nothing pos
-
-             else
-                CTBlk subtree (Just pid) pos
-            )
         |> addToHistory
 
 
-pasteBelow : String -> Tree -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-pasteBelow id copiedTree ( model, prevCmd, prevMsgsToParent ) =
+pasteBelow : String -> Tree -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+pasteBelow id copiedTree ( model, prevCmd ) =
     let
         ( newId, newSeed ) =
-            Random.step (stringGenerator 24) (GlobalData.seed model.globalData)
+            Random.step randomPositiveInt (GlobalData.seed model.globalData)
 
         treeToPaste =
-            TreeStructure.renameNodes newId copiedTree
+            TreeStructure.renameNodes (newId |> String.fromInt) copiedTree
 
         pid =
             (getParent id model.workingTree.tree |> Maybe.map .id) |> Maybe.withDefault "0"
@@ -2041,25 +1800,111 @@ pasteBelow id copiedTree ( model, prevCmd, prevMsgsToParent ) =
     in
     ( { model | globalData = GlobalData.setSeed newSeed model.globalData }
     , prevCmd
-    , prevMsgsToParent
     )
         |> paste treeToPaste pid pos
 
 
-pasteInto : String -> Tree -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-pasteInto id copiedTree ( model, prevCmd, prevMsgsToParent ) =
+pasteInto : String -> Tree -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+pasteInto id copiedTree ( model, prevCmd ) =
     let
         ( newId, newSeed ) =
-            Random.step (stringGenerator 24) (GlobalData.seed model.globalData)
+            Random.step randomPositiveInt (GlobalData.seed model.globalData)
 
         treeToPaste =
-            TreeStructure.renameNodes newId copiedTree
+            TreeStructure.renameNodes (newId |> String.fromInt) copiedTree
     in
     ( { model | globalData = GlobalData.setSeed newSeed model.globalData }
     , prevCmd
-    , prevMsgsToParent
     )
         |> paste treeToPaste id 999999
+
+
+
+-- === Local Saving ===
+
+
+localSave : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+localSave ( model, prevCmd ) =
+    updateDoc (ThrottledLocalSave (provideInput ())) model
+        |> Tuple.mapSecond (\cmd -> Cmd.batch [ prevCmd, cmd ])
+
+
+
+-- === History ===
+
+
+checkoutCommit : String -> Model -> ( Model, Cmd Msg )
+checkoutCommit commitSha model =
+    let
+        newTree_ =
+            Data.checkout commitSha model.data
+    in
+    case newTree_ of
+        Just newTree ->
+            ( { model
+                | workingTree = TreeStructure.setTree newTree model.workingTree
+              }
+            , Cmd.none
+            )
+                |> activate model.viewState.active False
+
+        Nothing ->
+            ( model
+            , Cmd.none
+            )
+
+
+
+-- History
+
+
+addToHistory : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+addToHistory ( model, prevCmd ) =
+    updateDoc (ThrottledCommit (provideInput ())) model
+        |> Tuple.mapSecond (\cmd -> Cmd.batch [ prevCmd, cmd ])
+
+
+
+-- === Files ===
+
+
+dataReceived : Json.Value -> Model -> ( Model, Cmd Msg )
+dataReceived dataIn model =
+    case Data.received dataIn ( model.data, model.workingTree.tree ) of
+        Just { newModel, newTree } ->
+            let
+                vs =
+                    model.viewState
+
+                newWorkingTree =
+                    TreeStructure.setTreeWithConflicts (Data.conflictList newModel) newTree model.workingTree
+
+                startingWordcount =
+                    countWords (treeToMarkdownString False newTree)
+
+                ( newViewState, maybeScroll ) =
+                    case Json.decodeValue (Json.at [ "localStore", "last-actives" ] (Json.list Json.string)) dataIn of
+                        Ok (lastActive :: activePast) ->
+                            ( { vs | active = lastActive, activePast = activePast }, activate lastActive True )
+
+                        _ ->
+                            ( vs, activate "1" True )
+            in
+            ( { model
+                | data = newModel
+                , loading = False
+                , workingTree = newWorkingTree
+                , viewState = newViewState
+                , lastLocalSave = Data.lastCommitTime newModel |> Maybe.map Time.millisToPosix
+                , lastRemoteSave = Data.lastCommitTime newModel |> Maybe.map Time.millisToPosix
+                , startingWordcount = startingWordcount
+              }
+            , Cmd.none
+            )
+                |> maybeScroll
+
+        Nothing ->
+            ( model, Cmd.none )
 
 
 
@@ -2074,127 +1919,127 @@ type alias AppMsgs msg =
     }
 
 
-view : AppMsgs msg -> Maybe Time.Posix -> Maybe Time.Posix -> Model -> List (Html msg)
-view appMsg lastLocalSave lastRemoteSave (Model model) =
+view : AppMsgs msg -> Model -> List (Html msg)
+view appMsg model =
     if model.loading then
         UI.viewDocumentLoadingSpinner
 
     else
-        case model.viewState.viewMode of
-            FullscreenEditing { cardId, field } ->
-                [ Fullscreen.view
-                    { language = GlobalData.language model.globalData
-                    , isMac = GlobalData.isMac model.globalData
-                    , dirty = model.dirty
-                    , lastLocalSave = lastLocalSave
-                    , lastRemoteSave = lastRemoteSave
-                    , currentTime = GlobalData.currentTime model.globalData
-                    , model = model.workingTree
-                    , collaborators = model.viewState.collaborators
-                    , activeId = cardId
-                    , msgs =
-                        { saveChanges = SaveFromFullscreen
-                        , exitFullscreenRequested = ExitFullscreenRequested
-                        , saveAndExitFullscreen = SaveAndExitFullscreen
-                        }
-                    }
-                    |> Html.map appMsg.docMsg
-                ]
-
-            _ ->
-                viewLoaded appMsg model
+        viewLoaded appMsg model
 
 
-viewLoaded : AppMsgs msg -> ModelData -> List (Html msg)
+viewLoaded : AppMsgs msg -> Model -> List (Html msg)
 viewLoaded ({ docMsg } as appMsg) model =
     let
-        activeId =
-            getActiveId (Model model)
+        language =
+            GlobalData.language model.globalData
 
-        activeTree_ =
-            getTree activeId model.workingTree.tree
-
-        mobileBtnMsg shortcut =
-            appMsg.keyboard shortcut
-
-        cardTitleReplacer ( id, inputString ) =
-            case String.lines inputString of
-                firstLine :: _ ->
-                    ( id
-                    , firstLine
-                        |> String.trim
-                        |> (\str ->
-                                if String.isEmpty str then
-                                    "(empty)"
-
-                                else
-                                    str
-                           )
-                    )
-
-                [] ->
-                    ( id, "(empty)" )
-
-        cardTitles =
-            case activeTree_ of
-                Just activeTree ->
-                    (getAncestors model.workingTree.tree activeTree []
-                        |> List.map (\t -> ( t.id, t.content ))
-                        |> List.drop 1
-                    )
-                        ++ [ ( activeTree.id, activeTree.content ) ]
-                        |> List.map cardTitleReplacer
-
-                Nothing ->
-                    []
+        isMac =
+            GlobalData.isMac model.globalData
     in
-    [ lazy5 treeView (GlobalData.language model.globalData) (GlobalData.isMac model.globalData) model.viewState model.cardsCollapsed model.workingTree |> Html.map docMsg
-    , if (not << List.isEmpty) cardTitles then
-        UI.viewBreadcrumbs Activate cardTitles |> Html.map docMsg
+    case Data.conflictList model.data of
+        [] ->
+            if model.viewState.viewMode == FullscreenEditing then
+                lazy3 Fullscreen.view
+                    { language = language
+                    , isMac = isMac
+                    , dirty = model.dirty
+                    , model = model.workingTree
+                    , lastLocalSave = model.lastLocalSave
+                    , lastRemoteSave = model.lastRemoteSave
+                    , currentTime = GlobalData.currentTime model.globalData
+                    }
+                    model.field
+                    model.viewState
+                    |> Html.map (docMsg << FullscreenMsg)
+                    |> List.singleton
 
-      else
-        text ""
-    , if model.cardsCollapsed then
-        div [ id "collapsed-banner" ]
-            [ text "Collapsed Mode  -  "
-            , span [ class "shortcut-key", style "margin-top" "unset", style "margin-left" "3px" ] [ text "z" ]
-            , text " to toggle"
+            else
+                let
+                    activeTree_ =
+                        getTree model.viewState.active model.workingTree.tree
+
+                    mobileBtnMsg shortcut =
+                        appMsg.keyboard shortcut
+
+                    cardTitleReplacer ( id, inputString ) =
+                        case String.lines inputString of
+                            firstLine :: _ ->
+                                ( id
+                                , firstLine
+                                    |> String.trim
+                                    |> (\str ->
+                                            if String.isEmpty str then
+                                                "(empty)"
+
+                                            else
+                                                str
+                                       )
+                                )
+
+                            [] ->
+                                ( id, "(empty)" )
+
+                    cardTitles =
+                        case activeTree_ of
+                            Just activeTree ->
+                                (getAncestors model.workingTree.tree activeTree []
+                                    |> List.map (\t -> ( t.id, t.content ))
+                                    |> List.drop 1
+                                )
+                                    ++ [ ( activeTree.id, activeTree.content ) ]
+                                    |> List.map cardTitleReplacer
+
+                            Nothing ->
+                                []
+                in
+                [ lazy4 treeView (GlobalData.language model.globalData) (GlobalData.isMac model.globalData) model.viewState model.workingTree |> Html.map docMsg
+                , if (not << List.isEmpty) cardTitles then
+                    UI.viewBreadcrumbs Activate cardTitles |> Html.map docMsg
+
+                  else
+                    text ""
+                ]
+                    ++ [ viewSearchField SearchFieldUpdated model |> Html.map docMsg
+                       , viewMobileButtons
+                            { edit = mobileBtnMsg "mod+enter"
+                            , save = mobileBtnMsg "mod+enter"
+                            , cancel = mobileBtnMsg "esc"
+                            , plusDown = mobileBtnMsg "mod+down"
+                            , plusUp = mobileBtnMsg "mod+up"
+                            , plusRight = mobileBtnMsg "mod+right"
+                            , navLeft = mobileBtnMsg "left"
+                            , navUp = mobileBtnMsg "up"
+                            , navDown = mobileBtnMsg "down"
+                            , navRight = mobileBtnMsg "right"
+                            }
+                            (model.viewState.viewMode /= Normal)
+                       , Keyed.node "div" [ style "display" "contents" ] [ ( "randomstringforloadingoverlay", div [ id "loading-overlay" ] [] ) ]
+                       , div [ id "preloader" ] []
+                       ]
+
+        conflicts ->
+            let
+                bgString =
+                    """
+repeating-linear-gradient(-45deg
+, rgba(255,255,255,0.02)
+, rgba(255,255,255,0.02) 15px
+, rgba(0,0,0,0.025) 15px
+, rgba(0,0,0,0.06) 30px
+)
+          """
+            in
+            [ ul [ class "conflicts-list" ]
+                (List.map (viewConflict language SetSelection Resolve) conflicts)
+                |> Html.map docMsg
+            , lazy4 treeView (GlobalData.language model.globalData) (GlobalData.isMac model.globalData) model.viewState model.workingTree |> Html.map docMsg
             ]
 
-      else
-        text ""
-    ]
-        ++ [ viewSearchField SearchFieldUpdated model |> Html.map docMsg
-           , viewMobileButtons
-                { edit = mobileBtnMsg "mod+enter"
-                , save = mobileBtnMsg "mod+enter"
-                , cancel = mobileBtnMsg "esc"
-                , plusDown = mobileBtnMsg "mod+down"
-                , plusUp = mobileBtnMsg "mod+up"
-                , plusRight = mobileBtnMsg "mod+right"
-                , navLeft = mobileBtnMsg "left"
-                , navUp = mobileBtnMsg "up"
-                , navDown = mobileBtnMsg "down"
-                , navRight = mobileBtnMsg "right"
-                }
-                (case model.viewState.viewMode of
-                    Normal _ ->
-                        False
 
-                    _ ->
-                        True
-                )
-           , Keyed.node "div" [ style "display" "contents" ] [ ( "randomstringforloadingoverlay", div [ id "loading-overlay" ] [] ) ]
-           , div [ id "preloader" ] []
-           ]
-
-
-treeView : Language -> Bool -> ViewState -> Bool -> TreeStructure.Model -> Html Msg
-treeView lang isMac vstate cardsCollapsed model =
+treeView : Language -> Bool -> ViewState -> TreeStructure.Model -> Html Msg
+treeView lang isMac vstate model =
     let
-        activeId =
-            getActiveIdFromViewState vstate
-
         searchFilter term_ cols =
             case term_ of
                 Just term ->
@@ -2220,22 +2065,22 @@ treeView lang isMac vstate cardsCollapsed model =
             let
                 editing_ =
                     case vstate.viewMode of
-                        Normal _ ->
-                            VisibleNormal
+                        Normal ->
+                            Normal
 
-                        Editing _ ->
-                            if c |> List.concat |> List.map .id |> List.member activeId then
-                                VisibleEditing
+                        Editing ->
+                            if c |> List.concat |> List.map .id |> List.member vstate.active then
+                                Editing
 
                             else
-                                VisibleNormal
+                                Normal
 
-                        FullscreenEditing _ ->
+                        FullscreenEditing ->
                             -- TODO : Impossible state
-                            VisibleFullscreenEditing
+                            Normal
             in
             VisibleViewState
-                activeId
+                vstate.active
                 editing_
                 vstate.descendants
                 vstate.ancestors
@@ -2250,7 +2095,6 @@ treeView lang isMac vstate cardsCollapsed model =
     in
     div
         [ id "document"
-        , classList [ ( "collapsed", cardsCollapsed ) ]
         ]
         [ div [ class "left-padding-column" ] []
         , div [ id "column-container" ]
@@ -2308,57 +2152,37 @@ viewGroup vstate xs =
 
                 isEditing =
                     case vstate.viewMode of
-                        VisibleEditing ->
+                        Editing ->
                             t.id == vstate.active
 
-                        VisibleNormal ->
+                        Normal ->
                             False
 
-                        VisibleFullscreenEditing ->
+                        FullscreenEditing ->
                             -- TODO : Impossible state
                             False
 
                 isLast =
                     t.id == lastChild
 
+                collabsEditingCard =
+                    vstate.collaborators
+                        |> List.filter (\c -> c.mode == CollabEditing t.id)
+                        |> List.map .uid
+
                 collabsOnCard =
                     vstate.collaborators
                         |> List.filter (\c -> c.mode == CollabActive t.id || c.mode == CollabEditing t.id)
+                        |> List.map .uid
             in
             if isActive && not isEditing then
-                ( t.id
-                , lazy7 viewCardActive
-                    vstate.language
-                    t.id
-                    t.content
-                    (hasChildren t)
-                    isLast
-                    collabsOnCard
-                    vstate.dragModel
-                )
+                ( t.id, lazy8 viewCardActive vstate.language t.id t.content (hasChildren t) isLast collabsOnCard collabsEditingCard vstate.dragModel )
 
             else if isEditing then
-                ( t.id
-                , lazy5 viewCardEditing
-                    vstate.language
-                    t.id
-                    t.content
-                    (hasChildren t)
-                    vstate.isMac
-                )
+                ( t.id, viewCardEditing vstate.language t.id t.content (hasChildren t) vstate.isMac )
 
             else
-                ( t.id
-                , lazy8 viewCardOther
-                    t.id
-                    t.content
-                    collabsOnCard
-                    isEditing
-                    (hasChildren t)
-                    isAncestor
-                    isLast
-                    vstate.dragModel
-                )
+                ( t.id, lazy7 viewCardOther t.id t.content isEditing (hasChildren t) isAncestor isLast vstate.dragModel )
     in
     Keyed.node "div"
         [ classList
@@ -2381,12 +2205,8 @@ viewGroup vstate xs =
         )
 
 
-viewCardOther : String -> String -> List Collaborator -> Bool -> Bool -> Bool -> Bool -> ( DragDrop.Model String DropId, DragExternalModel ) -> Html Msg
-viewCardOther cardId content collabsOnCard isEditing isParent isAncestor isLast dragModels =
-    let
-        collabsEditingCard =
-            collabsOnCard |> List.filter (\c -> c.mode == CollabEditing cardId)
-    in
+viewCardOther : String -> String -> Bool -> Bool -> Bool -> Bool -> ( DragDrop.Model String DropId, DragExternalModel ) -> Html Msg
+viewCardOther cardId content isEditing isParent isAncestor isLast dragModels =
     div
         [ id ("card-" ++ cardId)
         , dir "auto"
@@ -2394,8 +2214,6 @@ viewCardOther cardId content collabsOnCard isEditing isParent isAncestor isLast 
             [ ( "card", True )
             , ( "ancestor", isAncestor )
             , ( "has-children", isParent )
-            , ( "collab-active", not (List.isEmpty collabsOnCard) )
-            , ( "collab-editing", not (List.isEmpty collabsEditingCard) )
             ]
         ]
         ((if not isEditing then
@@ -2411,17 +2229,13 @@ viewCardOther cardId content collabsOnCard isEditing isParent isAncestor isLast 
                     , onDoubleClick (OpenCard cardId content)
                     ]
                     [ lazy2 viewContent cardId content ]
-               , UI.Collaborators.viewOnCard collabsOnCard
                ]
         )
 
 
-viewCardActive : Language -> String -> String -> Bool -> Bool -> List Collaborator -> ( DragDrop.Model String DropId, DragExternalModel ) -> Html Msg
-viewCardActive lang cardId content isParent isLast collabsOnCard dragModels =
+viewCardActive : Language -> String -> String -> Bool -> Bool -> List String -> List String -> ( DragDrop.Model String DropId, DragExternalModel ) -> Html Msg
+viewCardActive lang cardId content isParent isLast collabsOnCard collabsEditingCard dragModels =
     let
-        collabsEditingCard =
-            collabsOnCard |> List.filter (\c -> c.mode == CollabEditing cardId)
-
         buttons =
             [ div [ class "flex-row card-top-overlay" ]
                 [ span
@@ -2483,13 +2297,13 @@ viewCardActive lang cardId content isParent isLast collabsOnCard dragModels =
                     , onDoubleClick (OpenCard cardId content)
                     ]
                     [ lazy2 viewContent cardId content ]
-               , UI.Collaborators.viewOnCard collabsOnCard
+               , collabsSpan collabsOnCard collabsEditingCard
                ]
         )
 
 
 viewCardEditing : Language -> String -> String -> Bool -> Bool -> Html Msg
-viewCardEditing lang cardId content isParent _ =
+viewCardEditing lang cardId content isParent isMac =
     div
         [ id ("card-" ++ cardId)
         , dir "auto"
@@ -2501,16 +2315,16 @@ viewCardEditing lang cardId content isParent _ =
             ]
         , attribute "data-cloned-content" content
         ]
-        [ node "gw-textarea"
-            [ attribute "card-id" cardId
+        [ textarea
+            [ id ("card-edit-" ++ cardId)
             , dir "auto"
             , classList
                 [ ( "edit", True )
                 , ( "mousetrap", True )
                 ]
             , attribute "data-private" "lipsum"
-            , attribute "data-gramm" "false"
-            , attribute "start-value" content
+            , onInput <| UpdateActiveField cardId
+            , value content
             ]
             []
         , div [ class "flex-column card-right-overlay" ]
@@ -2602,16 +2416,6 @@ dropRegions cardId isEditing isLast ( dragModel, dragExternalModel ) =
             []
 
 
-preventIfBlocked : ModelData -> ( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )
-preventIfBlocked originalModel ( newModel, cmd, parentMsgs ) =
-    case originalModel.block of
-        Nothing ->
-            ( newModel, cmd, parentMsgs )
-
-        Just blockReason ->
-            ( originalModel, send <| Alert blockReason, [] )
-
-
 viewContent : String -> String -> Html Msg
 viewContent cardId content =
     let
@@ -2670,223 +2474,38 @@ viewContent cardId content =
         processedContent
 
 
+collabsSpan : List String -> List String -> Html Msg
+collabsSpan collabsOnCard collabsEditingCard =
+    let
+        collabsString =
+            collabsOnCard
+                |> List.map
+                    (\c ->
+                        if List.member c collabsEditingCard then
+                            c ++ " is editing"
+
+                        else
+                            c
+                    )
+                |> String.join ", "
+    in
+    span [ class "collaborators" ] [ text collabsString ]
+
+
 
 -- SUBSCRIPTIONS
 
 
 subscriptions : Model -> Sub Msg
-subscriptions (Model model) =
+subscriptions model =
     Sub.batch
         [ if model.dirty then
             Time.every (241 * 1000) (always AutoSave)
 
           else
             Sub.none
+        , Time.every (23 * 1000) (always Pull)
         ]
-
-
-setTree : Tree -> Model -> ( Model, Cmd Msg, List MsgToParent )
-setTree tree (Model model) =
-    { model
-        | workingTree = TreeStructure.setTree tree model.workingTree
-    }
-        |> (\m -> ( m, Cmd.none, [] ))
-        |> activate (getActiveId (Model model)) False
-        |> (\( m, c, msgs ) -> ( Model m, c, msgs ))
-
-
-setWorkingTree : TreeStructure.Model -> Model -> Model
-setWorkingTree workingTree (Model model) =
-    Model
-        { model | workingTree = workingTree }
-
-
-
--- Temporary getters & setters until I move these fields to parent
-
-
-isDirty : Model -> Bool
-isDirty (Model model) =
-    model
-        |> .dirty
-
-
-isFullscreen : Model -> Bool
-isFullscreen (Model model) =
-    model
-        |> .viewState
-        |> .viewMode
-        |> (\vm ->
-                case vm of
-                    FullscreenEditing _ ->
-                        True
-
-                    _ ->
-                        False
-           )
-
-
-isNormalMode : Model -> Bool
-isNormalMode (Model model) =
-    model
-        |> .viewState
-        |> .viewMode
-        |> (\vm ->
-                case vm of
-                    Normal _ ->
-                        True
-
-                    _ ->
-                        False
-           )
-
-
-getViewMode : Model -> ViewMode
-getViewMode (Model model) =
-    model
-        |> .viewState
-        |> .viewMode
-
-
-getActiveId : Model -> String
-getActiveId (Model model) =
-    case model.viewState.viewMode of
-        FullscreenEditing { cardId } ->
-            cardId
-
-        Editing { cardId } ->
-            cardId
-
-        Normal id ->
-            id
-
-
-getActiveIdFromViewMode : ViewMode -> String
-getActiveIdFromViewMode viewMode =
-    case viewMode of
-        FullscreenEditing { cardId } ->
-            cardId
-
-        Editing { cardId } ->
-            cardId
-
-        Normal id ->
-            id
-
-
-getActiveIdFromViewState : ViewState -> String
-getActiveIdFromViewState viewState =
-    case viewState.viewMode of
-        FullscreenEditing { cardId } ->
-            cardId
-
-        Editing { cardId } ->
-            cardId
-
-        Normal id ->
-            id
-
-
-lastActives : Result Json.Error (List String) -> Model -> ( Model, Cmd Msg )
-lastActives activesResult (Model prevModel) =
-    let
-        vs =
-            prevModel.viewState
-
-        ( newViewState, maybeScroll ) =
-            case activesResult of
-                Ok (lastActive :: activePast) ->
-                    let
-                        newViewMode =
-                            case vs.viewMode of
-                                FullscreenEditing { field } ->
-                                    FullscreenEditing { cardId = lastActive, field = field }
-
-                                Editing { field } ->
-                                    Editing { cardId = lastActive, field = field }
-
-                                Normal _ ->
-                                    Normal lastActive
-                    in
-                    ( { vs | viewMode = newViewMode, activePast = activePast }
-                    , activate lastActive True
-                    )
-
-                Ok _ ->
-                    ( vs, activate "1" True )
-
-                Err _ ->
-                    ( vs, identity )
-    in
-    ( { prevModel | viewState = newViewState }, Cmd.none, [] )
-        |> maybeScroll
-        |> (\( m, c, _ ) -> ( Model m, c ))
-
-
-getTextCursorInfo : Model -> TextCursorInfo
-getTextCursorInfo (Model model) =
-    model
-        |> .textCursorInfo
-
-
-setDirty : Bool -> Model -> Model
-setDirty dirty (Model model) =
-    Model { model | dirty = dirty }
-
-
-getGlobalData : Model -> GlobalData
-getGlobalData (Model model) =
-    model
-        |> .globalData
-
-
-setGlobalData : GlobalData -> Model -> Model
-setGlobalData globalData (Model model) =
-    Model
-        { model
-            | globalData = globalData
-        }
-
-
-setBlock : Maybe String -> Model -> Model
-setBlock block_ (Model model) =
-    Model { model | block = block_ }
-
-
-maybeActivate : Model -> ( Model, Cmd Msg )
-maybeActivate (Model model) =
-    let
-        activeId =
-            getActiveId (Model model)
-    in
-    changeMode { to = Normal activeId, instant = False, save = False } model
-        |> (\( m, c, _ ) -> ( Model m, c ))
-
-
-setLoading : Bool -> Model -> Model
-setLoading loading (Model model) =
-    Model
-        { model
-            | loading = loading
-        }
-
-
-getWorkingTree : Model -> TreeStructure.Model
-getWorkingTree (Model model) =
-    model
-        |> .workingTree
-
-
-getCollaborators : Model -> List Collaborator
-getCollaborators (Model model) =
-    model
-        |> .viewState
-        |> .collaborators
-
-
-getActiveTree : Model -> Maybe Tree
-getActiveTree (Model model) =
-    getTree (getActiveId (Model model)) model.workingTree.tree
 
 
 
@@ -2898,14 +2517,13 @@ focus id =
     Task.attempt (\_ -> NoOp) (Browser.Dom.focus ("card-edit-" ++ id))
 
 
-normalMode : ModelData -> (( ModelData, Cmd Msg, List MsgToParent ) -> ( ModelData, Cmd Msg, List MsgToParent )) -> ( ModelData, Cmd Msg, List MsgToParent )
+normalMode : Model -> (( Model, Cmd Msg ) -> ( Model, Cmd Msg )) -> ( Model, Cmd Msg )
 normalMode model operation =
     ( model
     , Cmd.none
-    , []
     )
         |> (case model.viewState.viewMode of
-                Normal _ ->
+                Normal ->
                     operation
 
                 _ ->

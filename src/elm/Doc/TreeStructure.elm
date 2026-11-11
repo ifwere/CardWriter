@@ -30,7 +30,7 @@ defaultTree : Tree
 defaultTree =
     { id = "0"
     , content = ""
-    , children = Children []
+    , children = Children [ Tree "1" "" (Children []) ]
     }
 
 
@@ -92,8 +92,8 @@ updateTree msg tree =
                         )
             in
             tree
-                |> pruneSubtree toTree.id
-                |> modifyTree fromTree.id (\t -> { t | content = mergedContent, children = mergedChildren })
+                |> pruneSubtree fromTree.id
+                |> modifyTree toTree.id (\t -> { t | content = mergedContent, children = mergedChildren })
 
         Paste newTree parentId idx ->
             tree
@@ -340,7 +340,7 @@ renameNodes : String -> Tree -> Tree
 renameNodes salt tree =
     let
         newId =
-            sha1 (salt ++ tree.id)
+            "node-" ++ sha1 (salt ++ tree.id)
     in
     { tree
         | id = newId

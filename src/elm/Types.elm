@@ -1,5 +1,6 @@
-module Types exposing (CardTreeOp(..), Children(..), CollabStateMode(..), Collaborator, Column, ConflictSelection(..), CursorPosition(..), DragExternalModel, DropId(..), Group, OutsideData, SortBy(..), TextCursorInfo, Toast, ToastPersistence(..), ToastRole(..), TooltipPosition(..), Tree, ViewMode(..), ViewState, VisibleViewMode(..), VisibleViewState, dropIdToValue)
+module Types exposing (Children(..), CollabState, Column, CursorPosition(..), DragExternalModel, DropId(..), Group, HeaderMenuState(..), Mode(..), OutsideData, SidebarMenuState(..), SidebarState(..), SortBy(..), TextCursorInfo, TooltipPosition(..), Tree, ViewMode(..), ViewState, VisibleViewState, dropIdToValue)
 
+import Browser.Dom exposing (Element)
 import Html5.DragDrop as DragDrop
 import Json.Encode as Enc
 import Translation
@@ -22,29 +23,6 @@ type alias Group =
 
 type alias Column =
     List (List Tree)
-
-
-
--- Tree Ops for Card Based
-
-
-type CardTreeOp
-    = CTIns String String (Maybe String) Int
-    | CTUpd String String
-    | CTRmv String
-    | CTMov String (Maybe String) Int
-    | CTMrg String String Bool
-    | CTBlk Tree (Maybe String) Int
-
-
-
--- Conflict Version Selection
-
-
-type ConflictSelection
-    = Ours
-    | Theirs
-    | Original
 
 
 
@@ -83,47 +61,36 @@ dropIdToValue dropId =
 
 
 
--- Toasts
-
-
-type alias Toast =
-    { role : ToastRole
-    , message : String
-    }
-
-
-type ToastRole
-    = Info
-    | Warning
-    | Error
-    | SuccessToast
-
-
-type ToastPersistence
-    = Persistent
-    | Temporary
-
-
-
 -- Transient View States
 
 
 type ViewMode
-    = Normal String
-    | Editing { cardId : String, field : String }
-    | FullscreenEditing { cardId : String, field : String }
+    = Normal
+    | Editing
+    | FullscreenEditing
 
 
-type VisibleViewMode
-    = VisibleNormal
-    | VisibleEditing
-    | VisibleFullscreenEditing
+type SidebarState
+    = SidebarClosed
+    | File
+
+
+type SidebarMenuState
+    = NoSidebarMenu
+    | Account (Maybe Element)
 
 
 type SortBy
     = Alphabetical
     | ModifiedAt
     | CreatedAt
+
+
+type HeaderMenuState
+    = NoHeaderMenu
+    | ExportPreview
+    | HistoryView { start : String, currentView : String }
+    | Settings
 
 
 type TooltipPosition
@@ -134,21 +101,21 @@ type TooltipPosition
     | BelowLeftTooltip
 
 
-type alias Collaborator =
+type alias CollabState =
     { uid : String
-    , name : String
-    , mode : CollabStateMode
-    , int : Int
+    , mode : Mode
+    , field : String
     }
 
 
-type CollabStateMode
+type Mode
     = CollabActive String
     | CollabEditing String
 
 
 type alias ViewState =
-    { activePast : List String
+    { active : String
+    , activePast : List String
     , descendants : List String
     , ancestors : List String
     , viewMode : ViewMode
@@ -157,17 +124,17 @@ type alias ViewState =
     , draggedTree : Maybe ( Tree, String, Int )
     , copiedTree : Maybe Tree
     , clipboardTree : Maybe Tree
-    , collaborators : List Collaborator
+    , collaborators : List CollabState
     }
 
 
 type alias VisibleViewState =
     { active : String
-    , viewMode : VisibleViewMode
+    , viewMode : ViewMode
     , descendants : List String
     , ancestors : List String
     , dragModel : ( DragDrop.Model String DropId, DragExternalModel )
-    , collaborators : List Collaborator
+    , collaborators : List CollabState
     , language : Translation.Language
     , isMac : Bool
     }

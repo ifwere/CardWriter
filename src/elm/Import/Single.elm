@@ -1,6 +1,7 @@
 module Import.Single exposing (decoder, encode)
 
 import Coders exposing (lazyRecurse)
+import Doc.Data as Data
 import Doc.Metadata as Metadata
 import Doc.TreeStructure as TreeStructure exposing (labelTree)
 import Json.Decode as Dec exposing (Decoder, field, list, oneOf, string, succeed)
@@ -11,6 +12,21 @@ import Types exposing (Children(..), Tree)
 
 
 
+-- MODEL
+
+
+type alias NumberedTree =
+    { id : String
+    , content : String
+    , children : NumberedChildren
+    }
+
+
+type NumberedChildren
+    = NumberedChildren (List NumberedTree)
+
+
+
 -- EXPOSED
 
 
@@ -18,19 +34,11 @@ decoder : Random.Seed -> ( Decoder Tree, Random.Seed )
 decoder seed =
     let
         ( salt, newSeed ) =
-            Random.step (RandomId.stringGenerator 7) seed
+            Random.step RandomId.stringGenerator seed
     in
     ( decode
-        |> Dec.map
-            (\trees ->
-                trees
-                    |> List.indexedMap (\idx t -> labelTree idx salt t)
-                    |> List.map (TreeStructure.renameNodes salt)
-            )
-        |> Dec.map
-            (\trees ->
-                Tree "0" "" (Children trees)
-            )
+        |> Dec.map (\ult -> labelTree 0 "" ult)
+        |> Dec.map (TreeStructure.renameNodes salt)
     , newSeed
     )
 
@@ -48,9 +56,10 @@ encode { author, docId, fileName } tree =
 -- INTERNAL
 
 
-decode : Decoder (List Tree)
+decode : Decoder Tree
 decode =
     Dec.list unlabelledTreeDecoder
+        |> Dec.map (\children -> Tree "" "" (Children children))
 
 
 unlabelledTreeDecoder : Decoder Tree

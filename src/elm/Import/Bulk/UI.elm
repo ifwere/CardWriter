@@ -4,7 +4,6 @@ import Doc.Data as Data
 import Doc.Metadata as Metadata exposing (Metadata)
 import File exposing (File)
 import File.Select as Select
-import GlobalData exposing (GlobalData)
 import Html exposing (..)
 import Html.Attributes exposing (checked, classList, disabled, for, height, href, id, src, style, target, type_, width)
 import Html.Events exposing (on, onCheck, onClick)
@@ -13,7 +12,7 @@ import Json.Decode as Dec
 import Json.Encode as Enc
 import Octicons as Icon exposing (defaultOptions)
 import Outgoing exposing (Msg(..), send)
-import Session exposing (LoggedIn)
+import Session exposing (Session)
 import SharedUI exposing (modalWrapper)
 import Task
 import Time
@@ -26,10 +25,7 @@ import Types exposing (Tree)
 
 
 type alias Model =
-    { state : ImportModalState
-    , user : LoggedIn
-    , globalData : GlobalData.GlobalData
-    }
+    { state : ImportModalState, user : Session }
 
 
 type ImportModalState
@@ -53,9 +49,9 @@ type alias ImportSelection =
         }
 
 
-init : GlobalData -> LoggedIn -> Model
-init globalData user =
-    { state = ModalOpen { loginState = Checking, isFileDragging = False }, user = user, globalData = globalData }
+init : Session -> Model
+init user =
+    { state = ModalOpen { loginState = Checking, isFileDragging = False }, user = user }
 
 
 
@@ -71,7 +67,7 @@ type Msg
     | FileRequested
     | FileDraggedOver Bool
     | FileSelected File
-    | FileLoaded Int String
+    | FileLoaded String String
     | SelectAllToggled Bool
     | TreeSelected String Bool
     | SelectionDone
@@ -108,10 +104,15 @@ update msg ({ state, user } as model) =
             ( { model | state = ModalOpen { modalState | isFileDragging = isDraggedOver } }, Cmd.none )
 
         ( FileSelected file, _ ) ->
-            ( model, Task.perform (FileLoaded (GlobalData.currentTime model.globalData |> Time.posixToMillis)) (File.toString file) )
+            case Session.name model.user of
+                Just username ->
+                    ( model, Task.perform (FileLoaded username) (File.toString file) )
 
-        ( FileLoaded currTime contents, ModalOpen _ ) ->
-            case Dec.decodeString (Import.Bulk.decoder currTime) contents of
+                Nothing ->
+                    ( model, Cmd.none )
+
+        ( FileLoaded _ contents, ModalOpen _ ) ->
+            case Dec.decodeString Import.Bulk.decoder contents of
                 Ok dataList ->
                     let
                         listWithSelectState =
@@ -153,7 +154,7 @@ update msg ({ state, user } as model) =
         ( SelectionDone, ImportSelecting selectList ) ->
             let
                 author =
-                    user |> Session.name
+                    user |> Session.name |> Maybe.withDefault "jane.doe@gmail.com"
 
                 treeInfoToCommitReq ( id, mdata, tree ) =
                     Data.requestCommit tree author Data.empty (Metadata.encode mdata)
