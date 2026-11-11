@@ -24,8 +24,16 @@ export const LANGUAGES = fs
   .map((name) => name.slice(0, -".json".length))
   .sort();
 
+// Replacements are spliced into JavaScript string literals, so every character
+// that could terminate or corrupt the literal has to be escaped. Elm emits
+// double-quoted strings, and some translations contain quotes or newlines.
 function escapeReplacement(value) {
-  return String(value).replace(/\n/g, "\\n").replace(/'/g, "\\'");
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/"/g, '\\"')
+    .replace(/'/g, "\\'");
 }
 
 function hasText(value) {

@@ -6,7 +6,11 @@ const APP_ROOT = path.resolve(__dirname, "..", "..");
 let app: ElectronApplication;
 
 test.afterEach(async () => {
-  if (app) await app.close().catch(() => {});
+  if (app) {
+    // `close()` would ask the untitled document to save; exit immediately.
+    await app.evaluate(({ app: electronApp }) => electronApp.exit(0)).catch(() => {});
+    await app.close().catch(() => {});
+  }
 });
 
 test("home window renders and opens a new document", async () => {

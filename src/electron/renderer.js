@@ -26,7 +26,7 @@ const init = async function (filePath, fileData, fileSettings, undoData, isUntit
   let globalData =
     { seed : timestamp
     , currentTime : timestamp
-    , isMac : false
+    , isMac : window.electronAPI.platform === "darwin"
     };
   gingkoElectron = Elm.Electron.Electron.init({ flags: { filePath, fileData, fileSettings, undoData, globalData, isUntitled } })
 
@@ -88,7 +88,10 @@ window.onbeforeunload = (e) => {
     window.electronAPI.maybeCloseWindow()
     e.returnValue = false
   } else if (DIRTY) {
-    setTimeout(window.electronAPI.closeWindow, 200)
+    // The swap file holds the most recent saved state. Ask the main process to
+    // flush it to the document before destroying the window; retrying close
+    // here would loop forever while the document stayed dirty.
+    window.electronAPI.flushAndClose()
     e.returnValue = false
   }
 }

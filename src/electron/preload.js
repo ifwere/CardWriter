@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   saveFile: (data) => ipcRenderer.send("save-file", data),
   commitData: (commitData) => ipcRenderer.send("commit-data", commitData),
   maybeCloseWindow: () => ipcRenderer.send("maybe-close-window"),
+  flushAndClose: () => ipcRenderer.send("flush-and-close"),
   closeWindow: () => ipcRenderer.send("close-window"),
 
   /* Events */

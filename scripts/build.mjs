@@ -9,45 +9,18 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
 import * as esbuild from "esbuild";
 
 import { buildReplacements, applyTranslations, findUnreplaced } from "./translations.mjs";
-
-const require = createRequire(import.meta.url);
-const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const APP = path.join(ROOT, "app");
-
-const ELM_ENTRIES = [
-  ["src/elm/Electron/Electron.elm", "elm-electron.js"],
-  ["src/elm/Electron/Home.elm", "elm-home.js"],
-  ["src/elm/Electron/ShortcutsModal.elm", "elm-shortcuts.js"],
-  ["src/elm/Electron/VideosModal.elm", "elm-videos.js"],
-  ["src/elm/Electron/SupportModal.elm", "elm-support.js"],
-  ["src/elm/Electron/Worker.elm", "elm-worker.js"]
-];
-
-// Main-process modules are plain CommonJS; they are copied verbatim.
-const MAIN_FILES = [
-  "main.js",
-  "menu.js",
-  "commit.js",
-  "pandoc.js",
-  "version-store.js",
-  "store.js",
-  "util.js"
-];
-
-const PRELOAD_FILES = ["preload.js"];
-
-const RENDERER_ENTRIES = {
-  renderer: "src/electron/renderer.js",
-  home: "src/electron/home.js",
-  "shortcuts-modal": "src/electron/shortcuts-modal.js",
-  "videos-modal": "src/electron/videos-modal.js",
-  "support-modal": "src/electron/support-modal.js"
-};
+import {
+  ROOT,
+  APP,
+  STATIC,
+  ELM_ENTRIES,
+  MAIN_FILES,
+  PRELOAD_FILES,
+  RENDERER_ENTRIES
+} from "./build-inputs.mjs";
 
 function elmCommand() {
   const bin = path.join(ROOT, "node_modules", ".bin", process.platform === "win32" ? "elm.cmd" : "elm");
@@ -96,7 +69,7 @@ function compileElm() {
   let total = 0;
 
   for (const [input, output] of ELM_ENTRIES) {
-    const outPath = path.join(APP, output);
+    const outPath = path.join(STATIC, output);
     process.stdout.write(`\n[elm] ${input} -> ${output}\n`);
     execFileSync(
       elmBin,
@@ -122,7 +95,7 @@ function compileElm() {
 async function bundleRenderers() {
   await esbuild.build({
     entryPoints: RENDERER_ENTRIES,
-    outdir: APP,
+    outdir: STATIC,
     bundle: true,
     platform: "browser",
     format: "iife",

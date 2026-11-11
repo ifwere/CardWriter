@@ -27,6 +27,24 @@ test("replaces non-language placeholders", () => {
   }
 });
 
+test("escapes replacements that would break a JS string literal", () => {
+  const replacements = buildReplacements();
+  const german = replacements.get("%de:ExportSettingEverythingDesc%");
+  assert.ok(german.includes('\\"'), "double quotes are escaped");
+  const code = 'var x="%de:ExportSettingEverythingDesc%";';
+  const output = applyTranslations(code, replacements);
+  assert.doesNotThrow(() => new Function(output));
+});
+
+test("every replacement keeps a double-quoted JS literal parseable", () => {
+  const replacements = buildReplacements();
+  const code = [...replacements.keys()]
+    .map((token, index) => `var value${index}="${token}";`)
+    .join("\n");
+  const output = applyTranslations(code, replacements);
+  assert.doesNotThrow(() => new Function(output));
+});
+
 test("leaves unknown placeholders untouched", () => {
   const replacements = new Map([["%de:Cancel%", "Abbrechen"]]);
   const code = 'var a="%de:Cancel%";var b="%de:Missing%";';

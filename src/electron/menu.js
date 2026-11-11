@@ -40,10 +40,9 @@ function fileMenu(handlers, { isMac, isHome, isUntitled, recentDocuments }) {
   if (!isHome) {
     items.push({ type: "separator" });
     items.push({
-      label: isUntitled ? "Save" : "Saved",
+      label: "Save",
       accelerator: "CmdOrCtrl+S",
-      enabled: Boolean(isUntitled),
-      click: safe(handlers.clickedSaveAs)
+      click: safe(handlers.clickedSave)
     });
     items.push({
       label: "Save As…",
@@ -86,27 +85,34 @@ function editMenu(handlers, isEditMode) {
       {
         label: "Undo / Redo (Version History)",
         accelerator: "CmdOrCtrl+Z",
+        // The page's keyboard handler decides between native editing and
+        // subtree operations, so the menu must not steal the keystroke.
+        registerAccelerator: false,
         click: safe(handlers.clickedUndo)
       },
       { type: "separator" },
       {
         label: "Cut current subtree",
         accelerator: "CmdOrCtrl+X",
+        registerAccelerator: false,
         click: safe(handlers.clickedCut)
       },
       {
         label: "Copy current subtree",
         accelerator: "CmdOrCtrl+C",
+        registerAccelerator: false,
         click: safe(handlers.clickedCopy)
       },
       {
         label: "Paste subtree below current card",
         accelerator: "CmdOrCtrl+V",
+        registerAccelerator: false,
         click: safe(handlers.clickedPaste)
       },
       {
         label: "Paste subtree as child of current card",
         accelerator: "CmdOrCtrl+Shift+V",
+        registerAccelerator: false,
         click: safe(handlers.clickedPasteInto)
       }
     ]
@@ -121,9 +127,7 @@ function helpMenu(handlers) {
       { label: "Keyboard Shortcuts", click: safe(handlers.clickedShowShortcuts) },
       { label: "Help Videos", click: safe(handlers.clickedHelpVideos) },
       { label: "FAQ & Documentation", click: safe(handlers.clickedFAQ) },
-      { label: "Contact Support", click: safe(handlers.clickedContactSupport) },
-      { type: "separator" },
-      { role: "toggleDevTools" }
+      { label: "Contact Support", click: safe(handlers.clickedContactSupport) }
     ]
   };
 }

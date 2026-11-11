@@ -5,6 +5,8 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { APP, STATIC, GENERATED_BUNDLES } from "../../scripts/build-inputs.mjs";
+
 const ROOT = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf-8"));
 
@@ -29,27 +31,12 @@ test("every main-process module parses", () => {
 
 test("HTML templates reference bundles produced by the build", () => {
   const htmlDir = path.join(ROOT, "src", "electron", "html");
-  const elmOutputs = new Set([
-    "elm-electron.js",
-    "elm-home.js",
-    "elm-shortcuts.js",
-    "elm-videos.js",
-    "elm-support.js",
-    "elm-worker.js"
-  ]);
 
   for (const file of fs.readdirSync(htmlDir)) {
     const html = fs.readFileSync(path.join(htmlDir, file), "utf-8");
     const scripts = [...html.matchAll(/<script src="\.\/([^"]+)"/g)].map((match) => match[1]);
     for (const script of scripts) {
-      if (script.startsWith("elm-")) {
-        assert.ok(elmOutputs.has(script), `${file} references unknown ${script}`);
-      } else {
-        assert.ok(
-          ["renderer.js", "home.js", "shortcuts-modal.js", "videos-modal.js", "support-modal.js"].includes(script),
-          `${file} references unknown ${script}`
-        );
-      }
+      assert.ok(GENERATED_BUNDLES.has(script), `${file} references unknown ${script}`);
     }
   }
 });
@@ -59,22 +46,33 @@ test("templates reference existing static assets", () => {
   const htmlDir = path.join(ROOT, "src", "electron", "html");
   const allowedMissing = new Set();
 
-  const generated = new Set([
-    "elm-electron.js", "elm-home.js", "elm-shortcuts.js", "elm-videos.js", "elm-support.js",
-    "renderer.js", "home.js", "shortcuts-modal.js", "videos-modal.js", "support-modal.js"
-  ]);
-
   for (const file of fs.readdirSync(htmlDir)) {
     const html = fs.readFileSync(path.join(htmlDir, file), "utf-8");
     for (const match of html.matchAll(/(?:href|src)="\.\/([^"]+)"/g)) {
       const asset = match[1];
-      if (generated.has(asset) || allowedMissing.has(asset)) continue;
+      if (GENERATED_BUNDLES.has(asset) || allowedMissing.has(asset)) continue;
       assert.ok(
         fs.existsSync(path.join(staticDir, asset)),
         `${file} references missing static asset ${asset}`
       );
     }
   }
+});
+
+test("generated bundles and window templates share app/static", () => {
+  assert.equal(STATIC, path.join(APP, "static"));
+
+  const mainSource = fs.readFileSync(path.join(ROOT, "src", "electron", "main.js"), "utf-8");
+  for (const template of ["home.html", "renderer.html"]) {
+    assert.ok(
+      mainSource.includes(`path.join(__dirname, "static", "${template}")`),
+      `main process does not load ${template} from app/static`
+    );
+  }
+  assert.ok(
+    mainSource.includes('require("./static/elm-worker.js")'),
+    "worker bundle is not loaded from app/static"
+  );
 });
 
 test("bundled pandoc is an Intel macOS binary", () => {

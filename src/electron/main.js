@@ -90,6 +90,7 @@ function docMenuHandlers() {
     clickedNew: () => createDocWindow(null),
     clickedOpen: (item, focusedWindow) => openDocumentFromDialog(focusedWindow),
     clickedRecentDoc: (item, focusedWindow, openPath) => createDocWindow(openPath),
+    clickedSave: (item, focusedWindow) => saveDocumentNow(focusedWindow),
     clickedSaveAs: (item, focusedWindow) => saveDocumentAs(focusedWindow),
     clickedExport: (item, focusedWindow) => sendToDoc(focusedWindow, "clicked-export"),
     clickedClose: (item, focusedWindow) => (focusedWindow || BrowserWindow.getFocusedWindow())?.close(),
@@ -351,6 +352,11 @@ async function cleanupDocument(winData, removeSwapFile) {
     }
     if (removeSwapFile) {
       await fsp.unlink(winData.filePath + ".swp").catch(() => {});
+      // Untitled documents only exist as temp files; drop them on close.
+      if (winData.isUntitled && winData.filePath.startsWith(app.getPath("temp"))) {
+        await fsp.unlink(winData.filePath).catch(() => {});
+        await fsp.rm(versionStoreDir(winData.filePath), { recursive: true, force: true }).catch(() => {});
+      }
     }
     const writer = localStoreWriters.get(winData.filePath);
     if (writer) {
@@ -382,6 +388,31 @@ async function openDocumentFromDialog(win, focusNewWindow = false) {
     if (focusNewWindow && docWin) docWin.focus();
   }
   return true;
+}
+
+/**
+ * Explicit save (File > Save / Cmd+S). Autosave normally keeps the document
+ * current; this flushes the swap file and confirms the save to Elm.
+ *
+ * @param {import("electron").BrowserWindow|null} win
+ */
+async function saveDocumentNow(win) {
+  const targetWindow = win || BrowserWindow.getFocusedWindow();
+  const winData = targetWindow ? docWindows.get(targetWindow) : null;
+  if (!targetWindow || !winData) return false;
+  if (winData.isUntitled) return saveDocumentAs(targetWindow);
+
+  try {
+    if (winData.swapFileHandle) {
+      await winData.swapFileHandle.sync();
+      await fsp.copyFile(winData.filePath + ".swp", winData.filePath);
+    }
+    targetWindow.webContents.send("file-saved", [winData.filePath, Date.now(), winData.isUntitled]);
+    return true;
+  } catch (error) {
+    dialog.showErrorBox("Could not save document", String(error && error.message ? error.message : error));
+    return false;
+  }
 }
 
 /**
@@ -587,6 +618,25 @@ ipcMain.on("close-window", (event) => {
   if (win) win.close();
 });
 
+// Copy the last saved state from the swap file into the document, then close.
+// `destroy` skips `beforeunload`, so this cannot loop.
+ipcMain.on("flush-and-close", async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  const winData = win ? docWindows.get(win) : null;
+  if (!win || !winData) return;
+
+  try {
+    if (winData.swapFileHandle) {
+      await winData.swapFileHandle.sync();
+      await fsp.copyFile(winData.filePath + ".swp", winData.filePath);
+    }
+    win.destroy();
+  } catch (error) {
+    console.error("[close] could not flush document", error);
+    dialog.showErrorBox("Could not save document", String(error && error.message ? error.message : error));
+  }
+});
+
 ipcMain.on("maybe-close-window", async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) return;
@@ -746,10 +796,8 @@ app.on("web-contents-created", (event, webContents) => {
     return { action: "deny" };
   });
   webContents.on("will-navigate", (event, url) => {
-    if (/^(https?:|mailto:)/i.test(url)) {
-      event.preventDefault();
-      shell.openExternal(url);
-    }
+    event.preventDefault();
+    if (/^(https?:|mailto:)/i.test(url)) shell.openExternal(url);
   });
 });
 
@@ -801,7 +849,7 @@ app.whenReady().then(() => {
 
   // Elm worker for JSON imports.
   try {
-    const { Elm } = require("./elm-worker.js");
+    const { Elm } = require("./static/elm-worker.js");
     elmWorker = Elm.Electron.Worker.init({ flags: Date.now() });
     elmWorker.ports.fromElm.subscribe((elmData) => {
       switch (elmData[0]) {
