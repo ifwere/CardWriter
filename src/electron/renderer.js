@@ -71,12 +71,25 @@ window.electronAPI.clickedCopy((event) => {
   toElm('mod+c', 'docMsgs', 'Keyboard')
 })
 
+// Mirrors the keyboard path: read the clipboard, then hand the parsed tree (or
+// plain text) to Elm as a paste tag.
+const pasteFromClipboard = (elmTag) => {
+  window.electronAPI.readClipboard()
+    .then(clipString => {
+      try {
+        toElm(JSON.parse(clipString), "docMsgs", elmTag)
+      } catch {
+        toElm(clipString, "docMsgs", elmTag)
+      }
+    })
+}
+
 window.electronAPI.clickedPaste((event) => {
-  toElm('mod+v', 'docMsgs', 'Keyboard')
+  pasteFromClipboard('Paste')
 })
 
 window.electronAPI.clickedPasteInto((event) => {
-  toElm('mod+shift+v', 'docMsgs', 'Keyboard')
+  pasteFromClipboard('PasteInto')
 })
 
 window.checkboxClicked = (cardId, number) => {
