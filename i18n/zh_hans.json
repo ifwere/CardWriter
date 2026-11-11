@@ -1,1594 +1,1692 @@
 [
-    {
-        "term": "Cancel",
-        "definition": "\u53d6\u6d88",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Cancel",
-        "comment": ""
-    },
-    {
-        "term": "Recent Documents",
-        "definition": "\u6700\u8fd1\u7684\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:RecentDocuments",
-        "comment": ""
-    },
-    {
-        "term": "Last Opened",
-        "definition": "\u4e0a\u6b21\u6253\u5f00",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:LastOpened",
-        "comment": ""
-    },
-    {
-        "term": "Open Other Documents",
-        "definition": "\u6253\u5f00\u5176\u4ed6\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:OpenOtherDocuments",
-        "comment": ""
-    },
-    {
-        "term": "Remove From List",
-        "definition": "\u4ece\u5217\u8868\u4e2d\u79fb\u9664",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:RemoveFromList",
-        "comment": ""
-    },
-    {
-        "term": "New Document...",
-        "definition": "\u65b0\u7684\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:NeverSaved",
-        "comment": ""
-    },
-    {
-        "term": "Unsaved Changes...",
-        "definition": "\u672a\u4fdd\u5b58\u7684\u66f4\u6539",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:UnsavedChanges",
-        "comment": ""
-    },
-    {
-        "term": "Database Error...",
-        "definition": "\u6570\u636e\u5e93\u9519\u8bef",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DatabaseError",
-        "comment": ""
-    },
-    {
-        "term": "Last saved",
-        "definition": "\u4e0a\u6b21\u4fdd\u5b58",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:LastSaved",
-        "comment": ""
-    },
-    {
-        "term": "Last edit",
-        "definition": "\u4e0a\u6b21\u7f16\u8f91 ",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:LastEdit",
-        "comment": ""
-    },
-    {
-        "term": "Keyboard Shortcuts Help",
-        "definition": "\u5feb\u6377\u952e\u5e2e\u52a9",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:KeyboardHelp",
-        "comment": ""
-    },
-    {
-        "term": "Restore this Version",
-        "definition": "\u6062\u590d\u6b64\u7248\u672c",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:RestoreThisVersion",
-        "comment": ""
-    },
-    {
-        "term": "Enter",
-        "definition": "\u56de\u8f66",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EnterKey",
-        "comment": ""
-    },
-    {
-        "term": "to Edit",
-        "definition": "\u7f16\u8f91",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EnterAction",
-        "comment": ""
-    },
-    {
-        "term": "Edit Card (Enter)",
-        "definition": "\u7f16\u8f91\u5361\u7247\uff08\u56de\u8f66\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditCardTitle",
-        "comment": ""
-    },
-    {
-        "term": "to Navigate",
-        "definition": "\u5bfc\u822a",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ArrowsAction",
-        "comment": ""
-    },
-    {
-        "term": "to Add Child",
-        "definition": "\u6dfb\u52a0\u5b50\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddChildAction",
-        "comment": ""
-    },
-    {
-        "term": "to Split Card to the Right",
-        "definition": "\u5411\u53f3\u62c6\u5206\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SplitChildAction",
-        "comment": ""
-    },
-    {
-        "term": "Insert Child (Ctrl+L)",
-        "definition": "\u63d2\u5165\u5b50\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:InsertChildTitle",
-        "comment": ""
-    },
-    {
-        "term": "to Add Below",
-        "definition": "\u5728\u4e0b\u65b9\u6dfb\u52a0",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddBelowAction",
-        "comment": ""
-    },
-    {
-        "term": "to Split Card Down",
-        "definition": "\u5411\u4e0b\u62c6\u5206\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SplitBelowAction",
-        "comment": ""
-    },
-    {
-        "term": "to Merge into Next",
-        "definition": "\u5408\u5e76\u5230\u4e0b\u4e00\u4e2a",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MergeDownAction",
-        "comment": ""
-    },
-    {
-        "term": "Insert Below (Ctrl+J)",
-        "definition": "\u5728\u4e0b\u65b9\u63d2\u5165\uff08Ctrl+J\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:InsertBelowTitle",
-        "comment": ""
-    },
-    {
-        "term": "to Add Above",
-        "definition": "\u5728\u4e0a\u65b9\u6dfb\u52a0",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddAboveAction",
-        "comment": ""
-    },
-    {
-        "term": "to Split Card Upward",
-        "definition": "\u5411\u4e0a\u62c6\u5206\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SplitUpwardAction",
-        "comment": ""
-    },
-    {
-        "term": "to Merge into Previous",
-        "definition": "\u5408\u5e76\u5230\u4e0a\u4e00\u4e2a",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MergeUpAction",
-        "comment": ""
-    },
-    {
-        "term": "Insert Above (Ctrl+K)",
-        "definition": "\u5728\u4e0a\u65b9\u63d2\u5165\uff08Ctrl+K\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:InsertAboveTitle",
-        "comment": ""
-    },
-    {
-        "term": "(arrows)",
-        "definition": "\uff08\u7bad\u5934\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ArrowKeys",
-        "comment": ""
-    },
-    {
-        "term": "to Move",
-        "definition": "\u79fb\u52a8",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MoveAction",
-        "comment": ""
-    },
-    {
-        "term": "Backspace",
-        "definition": "\u9000\u683c\u952e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Backspace",
-        "comment": ""
-    },
-    {
-        "term": "to Delete",
-        "definition": "\u5220\u9664",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DeleteAction",
-        "comment": ""
-    },
-    {
-        "term": "Delete Card (Ctrl+Backspace)",
-        "definition": "\u5220\u9664\u5361\u7247(Ctrl+Backspace)",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DeleteCardTitle",
-        "comment": ""
-    },
-    {
-        "term": "for Bold",
-        "definition": "\u7c97\u4f53",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ForBold",
-        "comment": ""
-    },
-    {
-        "term": "for Italic",
-        "definition": "\u659c\u4f53",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ForItalic",
-        "comment": ""
-    },
-    {
-        "term": "to Save Changes",
-        "definition": "\u4fdd\u5b58\u66f4\u6539",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ToSaveChanges",
-        "comment": ""
-    },
-    {
-        "term": "Save Changes (Ctrl+Enter)",
-        "definition": "\u4fdd\u5b58\u66f4\u6539 (Ctrl+Enter)",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SaveChangesTitle",
-        "comment": ""
-    },
-    {
-        "term": "Esc",
-        "definition": "\u9000\u51fa",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EscKey",
-        "comment": ""
-    },
-    {
-        "term": "to Cancel Changes",
-        "definition": "\u53d6\u6d88\u66f4\u6539",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ToCancelChanges",
-        "comment": ""
-    },
-    {
-        "term": "Press '\/' to search",
-        "definition": "\u8f93\u5165\u201c\/\u201d\u8fdb\u884c\u641c\u7d22",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:PressToSearch",
-        "comment": ""
-    },
-    {
-        "term": "Heading Font",
-        "definition": "\u6807\u9898\u5b57\u4f53",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HeadingFont",
-        "comment": ""
-    },
-    {
-        "term": "Content Font",
-        "definition": "\u5185\u5bb9\u5b57\u4f53",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ContentFont",
-        "comment": ""
-    },
-    {
-        "term": "Editing\/Monospace Font",
-        "definition": "\u7f16\u8f91\/\u7b49\u5bbd\u5b57\u4f53",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditingFont",
-        "comment": ""
-    },
-    {
-        "term": "Session : %1 word",
-        "definition": {
-            "other": "\u672c\u8282\uff1a%1\u4e2a\u5b57"
-        },
-        "context": "",
-        "term_plural": "Session : %1 words",
-        "reference": "Elm:WordCountSession",
-        "comment": ""
-    },
-    {
-        "term": "Total : %1 word",
-        "definition": {
-            "other": "\u603b\u5171\uff1a%1\u4e2a\u5b57"
-        },
-        "context": "",
-        "term_plural": "Total : %1 words",
-        "reference": "Elm:WordCountTotal",
-        "comment": ""
-    },
-    {
-        "term": "Card : %1 word",
-        "definition": {
-            "other": "\u5361\u7247\uff1a%1\u4e2a\u5b57"
-        },
-        "context": "",
-        "term_plural": "Card : %1 words",
-        "reference": "Elm:WordCountCard",
-        "comment": ""
-    },
-    {
-        "term": "Subtree : %1 word",
-        "definition": {
-            "other": "\u6811\u8282\u70b9\u4e0b\uff1a%1\u4e2a\u5b57"
-        },
-        "context": "",
-        "term_plural": "Subtree : %1 words",
-        "reference": "Elm:WordCountSubtree",
-        "comment": ""
-    },
-    {
-        "term": "Group : %1 word",
-        "definition": {
-            "other": "\u7ec4\uff1a%1\u4e2a\u5b57"
-        },
-        "context": "",
-        "term_plural": "Group : %1 words",
-        "reference": "Elm:WordCountGroup",
-        "comment": ""
-    },
-    {
-        "term": "Column : %1 word",
-        "definition": {
-            "other": "\u5217\uff1a%1\u4e2a\u5b57"
-        },
-        "context": "",
-        "term_plural": "Column : %1 words",
-        "reference": "Elm:WordCountColumn",
-        "comment": ""
-    },
-    {
-        "term": "Saved",
-        "definition": "\u5df2\u4fdd\u5b58",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ChangesSaved",
-        "comment": ""
-    },
-    {
-        "term": "Blank Tree",
-        "definition": "\u7a7a\u767d",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HomeBlank",
-        "comment": ""
-    },
-    {
-        "term": "From Old Account",
-        "definition": "\u4ece\u65e7\u5e10\u6237",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HomeImportLegacy",
-        "comment": ""
-    },
-    {
-        "term": "Bulk transfer of trees from your legacy account",
-        "definition": "\u4ece\u65e7\u5e10\u6237\u4e2d\u6279\u91cf\u5bfc\u5165",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HomeLegacyFrom",
-        "comment": ""
-    },
-    {
-        "term": "Last Updated",
-        "definition": "\u4e0a\u6b21\u66f4\u65b0",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:LastUpdated",
-        "comment": ""
-    },
-    {
-        "term": "Delete Document",
-        "definition": "\u5220\u9664\u5e10\u6237",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DeleteDocument",
-        "comment": ""
-    },
-    {
-        "term": "Saved Offline",
-        "definition": "\u79bb\u7ebf\u4fdd\u5b58",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SavedInternally",
-        "comment": ""
-    },
-    {
-        "term": "Synced",
-        "definition": "\u5df2\u540c\u6b65",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ChangesSynced",
-        "comment": ""
-    },
-    {
-        "term": "More Formatting Options...",
-        "definition": "\u66f4\u591a\u683c\u5f0f...",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:FormattingGuide",
-        "comment": ""
-    },
-    {
-        "term": "Are you sure you want to undo your changes?",
-        "definition": "\u60a8\u786e\u5b9a\u8981\u64a4\u6d88\u66f4\u6539\u5417\uff1f",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AreYouSureCancel",
-        "comment": ""
-    },
-    {
-        "term": "to Edit in Fullscreen",
-        "definition": "\u5168\u5c4f\u7f16\u8f91",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditFullscreenAction",
-        "comment": ""
-    },
-    {
-        "term": "Quick Document Switcher",
-        "definition": "\u5feb\u901f\u6253\u5f00\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:QuickDocumentSwitcher",
-        "comment": ""
-    },
-    {
-        "term": "Email Support...",
-        "definition": "Email \u652f\u6301",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EmailSupport",
-        "comment": ""
-    },
-    {
-        "term": "Logout",
-        "definition": "\u9000\u51fa",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Logout",
-        "comment": ""
-    },
-    {
-        "term": "Language",
-        "definition": "\u8bed\u8a00",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Language",
-        "comment": ""
-    },
-    {
-        "term": "Contribute translations",
-        "definition": "\u53c2\u4e0e\u7ffb\u8bd1\uff1a",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ContributeTranslations",
-        "comment": ""
-    },
-    {
-        "term": "here",
-        "definition": "\u94fe\u63a5",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Here",
-        "comment": ""
-    },
-    {
-        "term": "Import JSON tree",
-        "definition": "\u5bfc\u5165JSON\u6811",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HomeImportJSON",
-        "comment": ""
-    },
-    {
-        "term": "From Gingko Desktop or Online export file",
-        "definition": "\u4ece\u672c\u5730\u6216\u7ebf\u4e0a",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HomeJSONFrom",
-        "comment": ""
-    },
-    {
-        "term": "New Document",
-        "definition": "\u65b0\u5efa\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:NewDocument",
-        "comment": ""
-    },
-    {
-        "term": "Show Document List",
-        "definition": "\u663e\u793a\u6587\u6863\u5217\u8868",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ShowDocumentList",
-        "comment": ""
-    },
-    {
-        "term": "Sort by Name",
-        "definition": "\u6309\u540d\u79f0\u5206\u7c7b",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SortByName",
-        "comment": ""
-    },
-    {
-        "term": "Sort by Last Modified",
-        "definition": "\u6309\u4e0a\u6b21\u4fee\u6539\u6392\u5e8f",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SortByLastModified",
-        "comment": ""
-    },
-    {
-        "term": "Sort by Date Created",
-        "definition": "\u6309\u521b\u5efa\u65e5\u671f\u6392\u5e8f",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SortByDateCreated",
-        "comment": ""
-    },
-    {
-        "term": "Templates & Examples",
-        "definition": "\u6a21\u677f\u548c\u793a\u4f8b",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:TemplatesAndExamples",
-        "comment": ""
-    },
-    {
-        "term": "New",
-        "definition": "\u65b0\u7684",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:New",
-        "comment": ""
-    },
-    {
-        "term": "Import",
-        "definition": "\u8fdb\u53e3",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ImportSectionTitle",
-        "comment": ""
-    },
-    {
-        "term": "Import Text Files",
-        "definition": "\u5bfc\u5165\u6587\u672c\u6587\u4ef6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ImportTextFiles",
-        "comment": ""
-    },
-    {
-        "term": "Import multiple markdown or regular text files.",
-        "definition": "\u5bfc\u5165\u591a\u4e2a Markdown \u6216\u5e38\u89c4\u6587\u672c\u6587\u4ef6\u3002",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ImportTextFilesDesc",
-        "comment": ""
-    },
-    {
-        "term": "Import Opml Files",
-        "definition": "\u5bfc\u5165 Opml \u6587\u4ef6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ImportOpmlFiles",
-        "comment": ""
-    },
-    {
-        "term": "Import from Workflowy or other outliners.",
-        "definition": "\u4ece Workflowy \u6216\u5176\u4ed6\u5927\u7eb2\u5bfc\u5165\u3002",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ImportOpmlFilesDesc",
-        "comment": ""
-    },
-    {
-        "term": "Timeline 2022",
-        "definition": "2022\u5e74\u65f6\u95f4\u8868",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:TimelineTemplate",
-        "comment": ""
-    },
-    {
-        "term": "A tree-based calendar",
-        "definition": "\u57fa\u4e8e\u6811\u7684\u65e5\u5386",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:TimelineTemplateDesc",
-        "comment": ""
-    },
-    {
-        "term": "Academic Paper",
-        "definition": "\u5b66\u672f\u8bba\u6587",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AcademicPaperTemplate",
-        "comment": ""
-    },
-    {
-        "term": "Starting point for journal paper",
-        "definition": "\u671f\u520a\u8bba\u6587\u7684\u8d77\u70b9",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AcademicPaperTemplateDesc",
-        "comment": ""
-    },
-    {
-        "term": "Project Brainstorming",
-        "definition": "\u9879\u76ee\u5934\u8111\u98ce\u66b4",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ProjectBrainstormingTemplate",
-        "comment": ""
-    },
-    {
-        "term": "Example on clarifying project goals",
-        "definition": "\u660e\u786e\u9879\u76ee\u76ee\u6807\u7684\u4f8b\u5b50",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ProjectBrainstormingTemplateDesc",
-        "comment": ""
-    },
-    {
-        "term": "Hero's Journey",
-        "definition": "\u82f1\u96c4\u4e4b\u65c5",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HerosJourneyTemplate",
-        "comment": ""
-    },
-    {
-        "term": "A framework for fictional stories",
-        "definition": "\u865a\u6784\u6545\u4e8b\u7684\u6846\u67b6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HerosJourneyTemplateDesc",
-        "comment": ""
-    },
-    {
-        "term": "Help",
-        "definition": "\u5e2e\u52a9",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Help",
-        "comment": ""
-    },
-    {
-        "term": "What's New",
-        "definition": "\u4ec0\u4e48\u662f\u65b0\u7684",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:WhatsNew",
-        "comment": ""
-    },
-    {
-        "term": "Account",
-        "definition": "\u5e10\u6237",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AccountTooltip",
-        "comment": ""
-    },
-    {
-        "term": "Keyboard Shortcuts",
-        "definition": "\u952e\u76d8\u5feb\u6377\u952e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:KeyboardShortcuts",
-        "comment": ""
-    },
-    {
-        "term": "View Mode Shortcuts : ",
-        "definition": "\u67e5\u770b\u6a21\u5f0f\u5feb\u6377\u65b9\u5f0f\uff1a ",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ViewModeShortcuts",
-        "comment": ""
-    },
-    {
-        "term": "Card Edit, Create, Delete",
-        "definition": "\u5361\u7247\u7f16\u8f91\u3001\u521b\u5efa\u3001\u5220\u9664",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:CardEditCreateDelete",
-        "comment": ""
-    },
-    {
-        "term": "Navigation, Moving Cards",
-        "definition": "\u5bfc\u822a\u3001\u79fb\u52a8\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:NavigationMovingCards",
-        "comment": ""
-    },
-    {
-        "term": "Copy\/Paste",
-        "definition": "\u590d\u5236\u7c98\u8d34",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:CopyPaste",
-        "comment": ""
-    },
-    {
-        "term": "Searching, Merging Cards",
-        "definition": "\u641c\u7d22\u3001\u5408\u5e76\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SearchingMerging",
-        "comment": ""
-    },
-    {
-        "term": "Help, Info, Documents",
-        "definition": "\u5e2e\u52a9\u3001\u4fe1\u606f\u3001\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HelpInfoDocs",
-        "comment": ""
-    },
-    {
-        "term": "Edit Mode Shortcuts : ",
-        "definition": "\u7f16\u8f91\u6a21\u5f0f\u5feb\u6377\u65b9\u5f0f\uff1a ",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditModeShortcuts",
-        "comment": ""
-    },
-    {
-        "term": "Card Save, Create",
-        "definition": "\u5361\u7247\u4fdd\u5b58\u3001\u521b\u5efa",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:CardSaveCreate",
-        "comment": ""
-    },
-    {
-        "term": "Edit card",
-        "definition": "\u7f16\u8f91\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditCard",
-        "comment": ""
-    },
-    {
-        "term": "Add card below",
-        "definition": "\u5728\u4e0b\u65b9\u6dfb\u52a0\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddCardBelow",
-        "comment": ""
-    },
-    {
-        "term": "Add card above",
-        "definition": "\u5728\u4e0a\u9762\u6dfb\u52a0\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddCardAbove",
-        "comment": ""
-    },
-    {
-        "term": "Add card to the right (as child)",
-        "definition": "\u5728\u53f3\u4fa7\u6dfb\u52a0\u5361\u7247\uff08\u4f5c\u4e3a\u5b50\u5361\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddCardToRight",
-        "comment": ""
-    },
-    {
-        "term": "Add card below (split at cursor)",
-        "definition": "\u5728\u4e0b\u65b9\u6dfb\u52a0\u5361\u7247\uff08\u5728\u5149\u6807\u5904\u62c6\u5206\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddCardBelowSplit",
-        "comment": ""
-    },
-    {
-        "term": "Add card above (split at cursor)",
-        "definition": "\u5728\u4e0a\u65b9\u6dfb\u52a0\u5361\u7247\uff08\u5728\u5149\u6807\u5904\u62c6\u5206\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddCardAboveSplit",
-        "comment": ""
-    },
-    {
-        "term": "Add card to the right (split at cursor)",
-        "definition": "\u5411\u53f3\u4fa7\u6dfb\u52a0\u5361\u7247\uff08\u5728\u5149\u6807\u5904\u62c6\u5206\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddCardToRightSplit",
-        "comment": ""
-    },
-    {
-        "term": "Delete card (and its children)",
-        "definition": "\u5220\u9664\u5361\uff08\u53ca\u5176\u5b50\u5361\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DeleteCard",
-        "comment": ""
-    },
-    {
-        "term": "Go up\/down\/left\/right",
-        "definition": "\u4e0a\/\u4e0b\/\u5de6\/\u53f3",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:GoUpDownLeftRight",
-        "comment": ""
-    },
-    {
-        "term": "Go to beginning of group",
-        "definition": "\u8f6c\u5230\u7ec4\u7684\u5f00\u5934",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:GoToBeginningOfGroup",
-        "comment": ""
-    },
-    {
-        "term": "Go to end of group",
-        "definition": "\u8f6c\u81f3\u7ec4\u5c3e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:GoToEndOfGroup",
-        "comment": ""
-    },
-    {
-        "term": "Go to beginning of column",
-        "definition": "\u8f6c\u5230\u5217\u7684\u5f00\u5934",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:GoToBeginningOfColumn",
-        "comment": ""
-    },
-    {
-        "term": "Go to end of column",
-        "definition": "\u8f6c\u5230\u5217\u7684\u672b\u5c3e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:GoToEndOfColumn",
-        "comment": ""
-    },
-    {
-        "term": "Move current card (and children)",
-        "definition": "\u79fb\u52a8\u5f53\u524d\u5361\uff08\u548c\u5b50\u5361\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MoveCurrentCard",
-        "comment": ""
-    },
-    {
-        "term": "PageUp",
-        "definition": "\u7ffb\u9875",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:PageUp",
-        "comment": ""
-    },
-    {
-        "term": "PageDown",
-        "definition": "\u5411\u4e0b\u7ffb\u9875",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:PageDown",
-        "comment": ""
-    },
-    {
-        "term": "Home",
-        "definition": "\u5bb6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HomeKey",
-        "comment": ""
-    },
-    {
-        "term": "End",
-        "definition": "\u7ed3\u5c3e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EndKey",
-        "comment": ""
-    },
-    {
-        "term": "(any of above)",
-        "definition": "\uff08\u4ee5\u4e0a\u4efb\u4f55\u4e00\u9879\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AnyOfAbove",
-        "comment": ""
-    },
-    {
-        "term": "Drag card by left edge",
-        "definition": "\u901a\u8fc7\u5de6\u8fb9\u7f18\u62d6\u52a8\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DragCard",
-        "comment": ""
-    },
-    {
-        "term": "Search",
-        "definition": "\u641c\u7d22",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Search",
-        "comment": ""
-    },
-    {
-        "term": "Clear search, focus current card",
-        "definition": "\u6e05\u9664\u641c\u7d22\uff0c\u805a\u7126\u5f53\u524d\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ClearSearch",
-        "comment": ""
-    },
-    {
-        "term": "Merge card up",
-        "definition": "\u5408\u5e76\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MergeCardUp",
-        "comment": ""
-    },
-    {
-        "term": "Merge card down",
-        "definition": "\u5411\u4e0b\u5408\u5e76\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MergeCardDown",
-        "comment": ""
-    },
-    {
-        "term": "Copy current subtree",
-        "definition": "\u590d\u5236\u5f53\u524d\u5b50\u6811",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:CopyCurrent",
-        "comment": ""
-    },
-    {
-        "term": "Paste subtree below current card",
-        "definition": "\u5728\u5f53\u524d\u5361\u7247\u4e0b\u65b9\u7c98\u8d34\u5b50\u6811",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:PasteBelow",
-        "comment": ""
-    },
-    {
-        "term": "Paste subtree as child of current card",
-        "definition": "\u5c06\u5b50\u6811\u7c98\u8d34\u4e3a\u5f53\u524d\u5361\u7684\u5b50\u6811",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:PasteAsChild",
-        "comment": ""
-    },
-    {
-        "term": "Insert selected text as new card",
-        "definition": "\u63d2\u5165\u9009\u5b9a\u7684\u6587\u672c\u4f5c\u4e3a\u65b0\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:InsertSelected",
-        "comment": ""
-    },
-    {
-        "term": "Drag selected text into tree",
-        "definition": "\u5c06\u9009\u5b9a\u7684\u6587\u672c\u62d6\u5165\u6811\u4e2d",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DragSelected",
-        "comment": ""
-    },
-    {
-        "term": "Word counts",
-        "definition": "\u5b57\u6570",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:WordCounts",
-        "comment": ""
-    },
-    {
-        "term": "Switch to different document",
-        "definition": "\u5207\u6362\u5230\u4e0d\u540c\u7684\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SwitchDocuments",
-        "comment": ""
-    },
-    {
-        "term": "This help screen",
-        "definition": "\u5e2e\u52a9",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ThisHelpScreen",
-        "comment": ""
-    },
-    {
-        "term": " or ",
-        "definition": " \u6216\u8005 ",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Or",
-        "comment": ""
-    },
-    {
-        "term": "Edit card in fullscreen mode",
-        "definition": "\u5728\u5168\u5c4f\u6a21\u5f0f\u4e0b\u7f16\u8f91\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditCardFullscreen",
-        "comment": ""
-    },
-    {
-        "term": "Edit Cards",
-        "definition": "\u7f16\u8f91\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditCards",
-        "comment": ""
-    },
-    {
-        "term": "Shift",
-        "definition": "\u8f6c\u79fb",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ShiftKey",
-        "comment": ""
-    },
-    {
-        "term": "AltKey",
-        "definition": "ALT\u952e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AltKey",
-        "comment": ""
-    },
-    {
-        "term": "Navigate",
-        "definition": "\u5bfc\u822a",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Navigate",
-        "comment": ""
-    },
-    {
-        "term": "Add New Cards",
-        "definition": "\u6dfb\u52a0\u65b0\u5361",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:AddNewCards",
-        "comment": ""
-    },
-    {
-        "term": "Split At Cursor",
-        "definition": "\u5728\u5149\u6807\u5904\u62c6\u5206",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SplitAtCursor",
-        "comment": ""
-    },
-    {
-        "term": "Merge Cards",
-        "definition": "\u5408\u5e76\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MergeCards",
-        "comment": ""
-    },
-    {
-        "term": "Move & Delete Cards",
-        "definition": "\u79fb\u52a8\u548c\u5220\u9664\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:MoveAndDelete",
-        "comment": ""
-    },
-    {
-        "term": "Bold selection",
-        "definition": "\u7c97\u4f53\/\u52a0\u7c97",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:BoldSelection",
-        "comment": ""
-    },
-    {
-        "term": "Italicize selection",
-        "definition": "\u659c\u4f53",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ItalicizeSelection",
-        "comment": ""
-    },
-    {
-        "term": "Save changes",
-        "definition": "\u4fdd\u5b58\u66f4\u6539",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SaveChanges",
-        "comment": ""
-    },
-    {
-        "term": "Save changes and exit card",
-        "definition": "\u4fdd\u5b58\u66f4\u6539\u5e76\u9000\u51fa\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SaveChangesAndExit",
-        "comment": ""
-    },
-    {
-        "term": "Exit edit mode",
-        "definition": "\u9000\u51fa\u7f16\u8f91\u6a21\u5f0f",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExitEditMode",
-        "comment": ""
-    },
-    {
-        "term": "Other Shortcuts",
-        "definition": "\u5176\u4ed6\u5feb\u6377\u952e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:OtherShortcuts",
-        "comment": ""
-    },
-    {
-        "term": "Display word counts",
-        "definition": "\u663e\u793a\u5b57\u6570",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DisplayWordCounts",
-        "comment": ""
-    },
-    {
-        "term": "(Edit Mode)",
-        "definition": "\uff08\u7f16\u8f91\u6a21\u5f0f\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:EditMode",
-        "comment": ""
-    },
-    {
-        "term": "Save\/Cancel Changes",
-        "definition": "\u4fdd\u5b58\/\u53d6\u6d88\u66f4\u6539",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SaveOrCancelChanges",
-        "comment": ""
-    },
-    {
-        "term": "Formatting",
-        "definition": "\u683c\u5f0f\u5316",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Formatting",
-        "comment": ""
-    },
-    {
-        "term": "# Title\n## Subtitle",
-        "definition": "\uff03 \u6807\u9898\n## \u526f\u6807\u9898",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:FormattingTitle",
-        "comment": ""
-    },
-    {
-        "term": "Set title level (# to #####)",
-        "definition": "\u8bbe\u7f6e\u6807\u9898\u7ea7\u522b\uff08# \u5230 #####\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SetTitleLevel",
-        "comment": ""
-    },
-    {
-        "term": "- List item\n  - Subitem",
-        "definition": "- \u9879\u76ee\u6e05\u5355\n  - \u5b50\u9879\u76ee",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:FormattingList",
-        "comment": ""
-    },
-    {
-        "term": "[link](http:\/\/t.co)",
-        "definition": "[\u94fe\u63a5](http:\/\/t.co)",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:FormattingLink",
-        "comment": ""
-    },
-    {
-        "term": "ParenNumber",
-        "definition": "\u7236\u7f16\u53f7",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ParenNumber",
-        "comment": ""
-    },
-    {
-        "term": "SetHeadingLevel",
-        "definition": "\u8bbe\u7f6e\u6807\u9898\u7ea7\u522b",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:SetHeadingLevel",
-        "comment": ""
-    },
-    {
-        "term": "Help Videos",
-        "definition": "\u5e2e\u52a9\u89c6\u9891",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:HelpVideos",
-        "comment": ""
-    },
-    {
-        "term": "FAQ & Documentation",
-        "definition": "\u5e38\u89c1\u95ee\u9898\u548c\u6587\u6863",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:FAQAndDocs",
-        "comment": ""
-    },
-    {
-        "term": "Open Quick Switcher",
-        "definition": "\u6253\u5f00\u5feb\u901f\u5207\u6362\u5668",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:OpenQuickSwitcher",
-        "comment": ""
-    },
-    {
-        "term": "Contact Support",
-        "definition": "Email \u652f\u6301",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ContactSupport",
-        "comment": ""
-    },
-    {
-        "term": "Version History",
-        "definition": "\u7248\u672c\u5386\u53f2",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:VersionHistory",
-        "comment": ""
-    },
-    {
-        "term": "Document Settings",
-        "definition": "\u6587\u6863\u8bbe\u7f6e",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DocumentSettings",
-        "comment": ""
-    },
-    {
-        "term": "Word count...",
-        "definition": "\u5b57\u6570...",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:WordCount",
-        "comment": ""
-    },
-    {
-        "term": "Total Cards in Tree : %1",
-        "definition": {
-            "other": "\u6811\u4e2d\u7684\u5361\u7247\u603b\u6570 : %1"
-        },
-        "context": "",
-        "term_plural": "Total Cards in Tree : %1",
-        "reference": "Elm:WordCountTotalCards",
-        "comment": ""
-    },
-    {
-        "term": "Document Theme",
-        "definition": "\u6587\u6863\u4e3b\u9898",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DocumentTheme",
-        "comment": ""
-    },
-    {
-        "term": "Default",
-        "definition": "\u9ed8\u8ba4",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ThemeDefault",
-        "comment": ""
-    },
-    {
-        "term": "Dark Mode",
-        "definition": "\u9ed1\u6697\u6a21\u5f0f",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ThemeDarkMode",
-        "comment": ""
-    },
-    {
-        "term": "Classic Gingkoapp",
-        "definition": "\u7ecf\u5178\u94f6\u674f",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ThemeClassic",
-        "comment": ""
-    },
-    {
-        "term": "Gray",
-        "definition": "\u7070\u8272\u7684",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ThemeGray",
-        "comment": ""
-    },
-    {
-        "term": "Green",
-        "definition": "\u7eff",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ThemeGreen",
-        "comment": ""
-    },
-    {
-        "term": "Turquoise",
-        "definition": "\u7eff\u677e\u77f3",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ThemeTurquoise",
-        "comment": ""
-    },
-    {
-        "term": "Export or Print",
-        "definition": "\u5bfc\u51fa\u6216\u6253\u5370",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportOrPrint",
-        "comment": ""
-    },
-    {
-        "term": "Everything",
-        "definition": "\u4e00\u5207",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingEverything",
-        "comment": ""
-    },
-    {
-        "term": "All cards in the tree (in depth-first order)",
-        "definition": "\u6811\u4e2d\u7684\u6240\u6709\u5361\u7247\uff08\u6309\u6df1\u5ea6\u4f18\u5148\u987a\u5e8f\uff09",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingEverythingDesc",
-        "comment": ""
-    },
-    {
-        "term": "Current Subtree",
-        "definition": "\u5f53\u524d\u5b50\u6811",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingCurrentSubtree",
-        "comment": ""
-    },
-    {
-        "term": "Current card and all its children",
-        "definition": "\u5f53\u524d\u5361\u53ca\u5176\u6240\u6709\u5b50\u5361",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingCurrentSubtreeDesc",
-        "comment": ""
-    },
-    {
-        "term": "Leaves-only",
-        "definition": "\u53ea\u53f6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingLeavesOnly",
-        "comment": ""
-    },
-    {
-        "term": "Only cards without children",
-        "definition": "\u53ea\u6709\u6ca1\u6709\u5b69\u5b50\u7684\u5361\u7247",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingLeavesOnlyDesc",
-        "comment": ""
-    },
-    {
-        "term": "Current Column",
-        "definition": "\u5f53\u524d\u5217",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingCurrentColumn",
-        "comment": ""
-    },
-    {
-        "term": "Only carsd in the current (vertical) column",
-        "definition": "\u5f53\u524d\uff08\u5782\u76f4\uff09\u5217\u4e2d\u53ea\u6709\u5361",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingCurrentColumnDesc",
-        "comment": ""
-    },
-    {
-        "term": "Word",
-        "definition": "\u5355\u8bcd",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingWord",
-        "comment": ""
-    },
-    {
-        "term": "Plain Text",
-        "definition": "\u7eaf\u6587\u672c",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingPlainText",
-        "comment": ""
-    },
-    {
-        "term": "JSON",
-        "definition": "JSON",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ExportSettingJSON",
-        "comment": ""
-    },
-    {
-        "term": "Download Word File",
-        "definition": "\u4e0b\u8f7dWord\u6587\u4ef6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DownloadWordFile",
-        "comment": ""
-    },
-    {
-        "term": "Download Markdown text file",
-        "definition": "\u4e0b\u8f7d Markdown \u6587\u672c\u6587\u4ef6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DownloadTextFile",
-        "comment": ""
-    },
-    {
-        "term": "Download JSON file",
-        "definition": "\u4e0b\u8f7d JSON \u6587\u4ef6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DownloadJSONFile",
-        "comment": ""
-    },
-    {
-        "term": "Print this",
-        "definition": "\u6253\u5370\u8fd9\u4e2a",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:PrintThis",
-        "comment": ""
-    },
-    {
-        "term": "Upgrade",
-        "definition": "\u5347\u7ea7",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:Upgrade",
-        "comment": ""
-    },
-    {
-        "term": "%1 day left in trial",
-        "definition": {
-            "other": "\u8bd5\u7528\u671f\u8fd8\u5269 %1 \u5929"
-        },
-        "context": "",
-        "term_plural": "%1 days left in trial",
-        "reference": "Elm:DaysLeft",
-        "comment": ""
-    },
-    {
-        "term": "Trial Expired",
-        "definition": "\u8bd5\u7528\u671f\u6ee1",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:TrialExpired",
-        "comment": ""
-    },
-    {
-        "term": "Manage Subscription",
-        "definition": "\u7ba1\u7406\u8ba2\u9605",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ManageSubscription",
-        "comment": ""
-    },
-    {
-        "term": "Duplicate Document",
-        "definition": "\u91cd\u590d\u6587\u4ef6",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:DuplicateDocument",
-        "comment": ""
-    },
-    {
-        "term": "Please confirm your email.",
-        "definition": "\u8bf7\u786e\u8ba4\u4f60\u7684\u7535\u5b50\u90ae\u4ef6\u3002",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ConfirmBannerStrong",
-        "comment": ""
-    },
-    {
-        "term": "We've sent instructions to ",
-        "definition": "\u6211\u4eec\u5df2\u5c06\u8bf4\u660e\u53d1\u9001\u81f3 ",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:ConfirmBannerBody",
-        "comment": ""
-    },
-    {
-        "term": "Love Gingko Writer?",
-        "definition": "\u7231\u94f6\u674f\u4f5c\u5bb6\uff1f",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:WordOfMouthCTA1",
-        "comment": ""
-    },
-    {
-        "term": "Leave a Testimonial",
-        "definition": "\u7559\u4e0b\u63a8\u8350\u4fe1",
-        "context": "",
-        "term_plural": "",
-        "reference": "Elm:WordOfMouthCTA2",
-        "comment": ""
-    }
+  {
+    "term": "Cancel",
+    "definition": "取消",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Cancel",
+    "comment": ""
+  },
+  {
+    "term": "Recent Documents",
+    "definition": "最近的文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:RecentDocuments",
+    "comment": ""
+  },
+  {
+    "term": "Last Opened",
+    "definition": "上次打开",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:LastOpened",
+    "comment": ""
+  },
+  {
+    "term": "Open Other Documents",
+    "definition": "打开其他文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:OpenOtherDocuments",
+    "comment": ""
+  },
+  {
+    "term": "Remove From List",
+    "definition": "从列表中移除",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:RemoveFromList",
+    "comment": ""
+  },
+  {
+    "term": "New Document...",
+    "definition": "新的文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:NeverSaved",
+    "comment": ""
+  },
+  {
+    "term": "Unsaved Changes...",
+    "definition": "未保存的更改",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:UnsavedChanges",
+    "comment": ""
+  },
+  {
+    "term": "Database Error...",
+    "definition": "数据库错误",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DatabaseError",
+    "comment": ""
+  },
+  {
+    "term": "Last saved",
+    "definition": "上次保存",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:LastSaved",
+    "comment": ""
+  },
+  {
+    "term": "Last edit",
+    "definition": "上次编辑 ",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:LastEdit",
+    "comment": ""
+  },
+  {
+    "term": "Keyboard Shortcuts Help",
+    "definition": "快捷键帮助",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:KeyboardHelp",
+    "comment": ""
+  },
+  {
+    "term": "Restore this Version",
+    "definition": "恢复此版本",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:RestoreThisVersion",
+    "comment": ""
+  },
+  {
+    "term": "Enter",
+    "definition": "回车",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EnterKey",
+    "comment": ""
+  },
+  {
+    "term": "to Edit",
+    "definition": "编辑",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EnterAction",
+    "comment": ""
+  },
+  {
+    "term": "Edit Card (Enter)",
+    "definition": "编辑卡片（回车）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditCardTitle",
+    "comment": ""
+  },
+  {
+    "term": "to Navigate",
+    "definition": "导航",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ArrowsAction",
+    "comment": ""
+  },
+  {
+    "term": "to Add Child",
+    "definition": "添加子卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddChildAction",
+    "comment": ""
+  },
+  {
+    "term": "to Split Card to the Right",
+    "definition": "向右拆分卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SplitChildAction",
+    "comment": ""
+  },
+  {
+    "term": "Insert Child (Ctrl+L)",
+    "definition": "插入子卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:InsertChildTitle",
+    "comment": ""
+  },
+  {
+    "term": "to Add Below",
+    "definition": "在下方添加",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddBelowAction",
+    "comment": ""
+  },
+  {
+    "term": "to Split Card Down",
+    "definition": "向下拆分卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SplitBelowAction",
+    "comment": ""
+  },
+  {
+    "term": "to Merge into Next",
+    "definition": "合并到下一个",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MergeDownAction",
+    "comment": ""
+  },
+  {
+    "term": "Insert Below (Ctrl+J)",
+    "definition": "在下方插入（Ctrl+J）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:InsertBelowTitle",
+    "comment": ""
+  },
+  {
+    "term": "to Add Above",
+    "definition": "在上方添加",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddAboveAction",
+    "comment": ""
+  },
+  {
+    "term": "to Split Card Upward",
+    "definition": "向上拆分卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SplitUpwardAction",
+    "comment": ""
+  },
+  {
+    "term": "to Merge into Previous",
+    "definition": "合并到上一个",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MergeUpAction",
+    "comment": ""
+  },
+  {
+    "term": "Insert Above (Ctrl+K)",
+    "definition": "在上方插入（Ctrl+K）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:InsertAboveTitle",
+    "comment": ""
+  },
+  {
+    "term": "(arrows)",
+    "definition": "（箭头）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ArrowKeys",
+    "comment": ""
+  },
+  {
+    "term": "to Move",
+    "definition": "移动",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MoveAction",
+    "comment": ""
+  },
+  {
+    "term": "Backspace",
+    "definition": "退格键",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Backspace",
+    "comment": ""
+  },
+  {
+    "term": "to Delete",
+    "definition": "删除",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DeleteAction",
+    "comment": ""
+  },
+  {
+    "term": "Delete Card (Ctrl+Backspace)",
+    "definition": "删除卡片(Ctrl+Backspace)",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DeleteCardTitle",
+    "comment": ""
+  },
+  {
+    "term": "for Bold",
+    "definition": "粗体",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ForBold",
+    "comment": ""
+  },
+  {
+    "term": "for Italic",
+    "definition": "斜体",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ForItalic",
+    "comment": ""
+  },
+  {
+    "term": "to Save Changes",
+    "definition": "保存更改",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ToSaveChanges",
+    "comment": ""
+  },
+  {
+    "term": "Save Changes (Ctrl+Enter)",
+    "definition": "保存更改 (Ctrl+Enter)",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SaveChangesTitle",
+    "comment": ""
+  },
+  {
+    "term": "Esc",
+    "definition": "退出",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EscKey",
+    "comment": ""
+  },
+  {
+    "term": "to Cancel Changes",
+    "definition": "取消更改",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ToCancelChanges",
+    "comment": ""
+  },
+  {
+    "term": "Press '/' to search",
+    "definition": "输入“/”进行搜索",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:PressToSearch",
+    "comment": ""
+  },
+  {
+    "term": "Heading Font",
+    "definition": "标题字体",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HeadingFont",
+    "comment": ""
+  },
+  {
+    "term": "Content Font",
+    "definition": "内容字体",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ContentFont",
+    "comment": ""
+  },
+  {
+    "term": "Editing/Monospace Font",
+    "definition": "编辑/等宽字体",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditingFont",
+    "comment": ""
+  },
+  {
+    "term": "Session : %1 word",
+    "definition": {
+      "other": "本节：%1个字"
+    },
+    "context": "",
+    "term_plural": "Session : %1 words",
+    "reference": "Elm:WordCountSession",
+    "comment": ""
+  },
+  {
+    "term": "Total : %1 word",
+    "definition": {
+      "other": "总共：%1个字"
+    },
+    "context": "",
+    "term_plural": "Total : %1 words",
+    "reference": "Elm:WordCountTotal",
+    "comment": ""
+  },
+  {
+    "term": "Card : %1 word",
+    "definition": {
+      "other": "卡片：%1个字"
+    },
+    "context": "",
+    "term_plural": "Card : %1 words",
+    "reference": "Elm:WordCountCard",
+    "comment": ""
+  },
+  {
+    "term": "Subtree : %1 word",
+    "definition": {
+      "other": "树节点下：%1个字"
+    },
+    "context": "",
+    "term_plural": "Subtree : %1 words",
+    "reference": "Elm:WordCountSubtree",
+    "comment": ""
+  },
+  {
+    "term": "Group : %1 word",
+    "definition": {
+      "other": "组：%1个字"
+    },
+    "context": "",
+    "term_plural": "Group : %1 words",
+    "reference": "Elm:WordCountGroup",
+    "comment": ""
+  },
+  {
+    "term": "Column : %1 word",
+    "definition": {
+      "other": "列：%1个字"
+    },
+    "context": "",
+    "term_plural": "Column : %1 words",
+    "reference": "Elm:WordCountColumn",
+    "comment": ""
+  },
+  {
+    "term": "Saved",
+    "definition": "已保存",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ChangesSaved",
+    "comment": ""
+  },
+  {
+    "term": "Blank Tree",
+    "definition": "空白",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HomeBlank",
+    "comment": ""
+  },
+  {
+    "term": "From Old Account",
+    "definition": "从旧帐户",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HomeImportLegacy",
+    "comment": ""
+  },
+  {
+    "term": "Bulk transfer of trees from your legacy account",
+    "definition": "从旧帐户中批量导入",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HomeLegacyFrom",
+    "comment": ""
+  },
+  {
+    "term": "Last Updated",
+    "definition": "上次更新",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:LastUpdated",
+    "comment": ""
+  },
+  {
+    "term": "Delete Document",
+    "definition": "删除帐户",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DeleteDocument",
+    "comment": ""
+  },
+  {
+    "term": "Saved Offline",
+    "definition": "离线保存",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SavedInternally",
+    "comment": ""
+  },
+  {
+    "term": "Synced",
+    "definition": "已同步",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ChangesSynced",
+    "comment": ""
+  },
+  {
+    "term": "More Formatting Options...",
+    "definition": "更多格式...",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:FormattingGuide",
+    "comment": ""
+  },
+  {
+    "term": "Are you sure you want to undo your changes?",
+    "definition": "您确定要撤消更改吗？",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AreYouSureCancel",
+    "comment": ""
+  },
+  {
+    "term": "to Edit in Fullscreen",
+    "definition": "全屏编辑",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditFullscreenAction",
+    "comment": ""
+  },
+  {
+    "term": "Quick Document Switcher",
+    "definition": "快速打开文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:QuickDocumentSwitcher",
+    "comment": ""
+  },
+  {
+    "term": "Email Support...",
+    "definition": "Email 支持",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EmailSupport",
+    "comment": ""
+  },
+  {
+    "term": "Logout",
+    "definition": "退出",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Logout",
+    "comment": ""
+  },
+  {
+    "term": "Language",
+    "definition": "语言",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Language",
+    "comment": ""
+  },
+  {
+    "term": "Contribute translations",
+    "definition": "参与翻译：",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ContributeTranslations",
+    "comment": ""
+  },
+  {
+    "term": "here",
+    "definition": "链接",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Here",
+    "comment": ""
+  },
+  {
+    "term": "Import JSON tree",
+    "definition": "导入JSON树",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HomeImportJSON",
+    "comment": ""
+  },
+  {
+    "term": "From Gingko Desktop or Online export file",
+    "definition": "从本地或线上",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HomeJSONFrom",
+    "comment": ""
+  },
+  {
+    "term": "New Document",
+    "definition": "新建文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:NewDocument",
+    "comment": ""
+  },
+  {
+    "term": "Show Document List",
+    "definition": "显示文档列表",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ShowDocumentList",
+    "comment": ""
+  },
+  {
+    "term": "Sort by Name",
+    "definition": "按名称分类",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SortByName",
+    "comment": ""
+  },
+  {
+    "term": "Sort by Last Modified",
+    "definition": "按上次修改排序",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SortByLastModified",
+    "comment": ""
+  },
+  {
+    "term": "Sort by Date Created",
+    "definition": "按创建日期排序",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SortByDateCreated",
+    "comment": ""
+  },
+  {
+    "term": "Templates & Examples",
+    "definition": "模板和示例",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:TemplatesAndExamples",
+    "comment": ""
+  },
+  {
+    "term": "New",
+    "definition": "新的",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:New",
+    "comment": ""
+  },
+  {
+    "term": "Import",
+    "definition": "进口",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ImportSectionTitle",
+    "comment": ""
+  },
+  {
+    "term": "Import Text Files",
+    "definition": "导入文本文件",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ImportTextFiles",
+    "comment": ""
+  },
+  {
+    "term": "Import multiple markdown or regular text files.",
+    "definition": "导入多个 Markdown 或常规文本文件。",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ImportTextFilesDesc",
+    "comment": ""
+  },
+  {
+    "term": "Import Opml Files",
+    "definition": "导入 Opml 文件",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ImportOpmlFiles",
+    "comment": ""
+  },
+  {
+    "term": "Import from Workflowy or other outliners.",
+    "definition": "从 Workflowy 或其他大纲导入。",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ImportOpmlFilesDesc",
+    "comment": ""
+  },
+  {
+    "term": "Timeline 2022",
+    "definition": "2022年时间表",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:TimelineTemplate",
+    "comment": ""
+  },
+  {
+    "term": "A tree-based calendar",
+    "definition": "基于树的日历",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:TimelineTemplateDesc",
+    "comment": ""
+  },
+  {
+    "term": "Academic Paper",
+    "definition": "学术论文",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AcademicPaperTemplate",
+    "comment": ""
+  },
+  {
+    "term": "Starting point for journal paper",
+    "definition": "期刊论文的起点",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AcademicPaperTemplateDesc",
+    "comment": ""
+  },
+  {
+    "term": "Project Brainstorming",
+    "definition": "项目头脑风暴",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ProjectBrainstormingTemplate",
+    "comment": ""
+  },
+  {
+    "term": "Example on clarifying project goals",
+    "definition": "明确项目目标的例子",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ProjectBrainstormingTemplateDesc",
+    "comment": ""
+  },
+  {
+    "term": "Hero's Journey",
+    "definition": "英雄之旅",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HerosJourneyTemplate",
+    "comment": ""
+  },
+  {
+    "term": "A framework for fictional stories",
+    "definition": "虚构故事的框架",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HerosJourneyTemplateDesc",
+    "comment": ""
+  },
+  {
+    "term": "Help",
+    "definition": "帮助",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Help",
+    "comment": ""
+  },
+  {
+    "term": "What's New",
+    "definition": "什么是新的",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:WhatsNew",
+    "comment": ""
+  },
+  {
+    "term": "Account",
+    "definition": "帐户",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AccountTooltip",
+    "comment": ""
+  },
+  {
+    "term": "Keyboard Shortcuts",
+    "definition": "键盘快捷键",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:KeyboardShortcuts",
+    "comment": ""
+  },
+  {
+    "term": "View Mode Shortcuts : ",
+    "definition": "查看模式快捷方式： ",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ViewModeShortcuts",
+    "comment": ""
+  },
+  {
+    "term": "Card Edit, Create, Delete",
+    "definition": "卡片编辑、创建、删除",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:CardEditCreateDelete",
+    "comment": ""
+  },
+  {
+    "term": "Navigation, Moving Cards",
+    "definition": "导航、移动卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:NavigationMovingCards",
+    "comment": ""
+  },
+  {
+    "term": "Copy/Paste",
+    "definition": "复制粘贴",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:CopyPaste",
+    "comment": ""
+  },
+  {
+    "term": "Searching, Merging Cards",
+    "definition": "搜索、合并卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SearchingMerging",
+    "comment": ""
+  },
+  {
+    "term": "Help, Info, Documents",
+    "definition": "帮助、信息、文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HelpInfoDocs",
+    "comment": ""
+  },
+  {
+    "term": "Edit Mode Shortcuts : ",
+    "definition": "编辑模式快捷方式： ",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditModeShortcuts",
+    "comment": ""
+  },
+  {
+    "term": "Card Save, Create",
+    "definition": "卡片保存、创建",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:CardSaveCreate",
+    "comment": ""
+  },
+  {
+    "term": "Edit card",
+    "definition": "编辑卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditCard",
+    "comment": ""
+  },
+  {
+    "term": "Add card below",
+    "definition": "在下方添加卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddCardBelow",
+    "comment": ""
+  },
+  {
+    "term": "Add card above",
+    "definition": "在上面添加卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddCardAbove",
+    "comment": ""
+  },
+  {
+    "term": "Add card to the right (as child)",
+    "definition": "在右侧添加卡片（作为子卡）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddCardToRight",
+    "comment": ""
+  },
+  {
+    "term": "Add card below (split at cursor)",
+    "definition": "在下方添加卡片（在光标处拆分）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddCardBelowSplit",
+    "comment": ""
+  },
+  {
+    "term": "Add card above (split at cursor)",
+    "definition": "在上方添加卡片（在光标处拆分）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddCardAboveSplit",
+    "comment": ""
+  },
+  {
+    "term": "Add card to the right (split at cursor)",
+    "definition": "向右侧添加卡片（在光标处拆分）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddCardToRightSplit",
+    "comment": ""
+  },
+  {
+    "term": "Delete card (and its children)",
+    "definition": "删除卡（及其子卡）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DeleteCard",
+    "comment": ""
+  },
+  {
+    "term": "Go up/down/left/right",
+    "definition": "上/下/左/右",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:GoUpDownLeftRight",
+    "comment": ""
+  },
+  {
+    "term": "Go to beginning of group",
+    "definition": "转到组的开头",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:GoToBeginningOfGroup",
+    "comment": ""
+  },
+  {
+    "term": "Go to end of group",
+    "definition": "转至组尾",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:GoToEndOfGroup",
+    "comment": ""
+  },
+  {
+    "term": "Go to beginning of column",
+    "definition": "转到列的开头",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:GoToBeginningOfColumn",
+    "comment": ""
+  },
+  {
+    "term": "Go to end of column",
+    "definition": "转到列的末尾",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:GoToEndOfColumn",
+    "comment": ""
+  },
+  {
+    "term": "Move current card (and children)",
+    "definition": "移动当前卡（和子卡）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MoveCurrentCard",
+    "comment": ""
+  },
+  {
+    "term": "PageUp",
+    "definition": "翻页",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:PageUp",
+    "comment": ""
+  },
+  {
+    "term": "PageDown",
+    "definition": "向下翻页",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:PageDown",
+    "comment": ""
+  },
+  {
+    "term": "Home",
+    "definition": "家",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HomeKey",
+    "comment": ""
+  },
+  {
+    "term": "End",
+    "definition": "结尾",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EndKey",
+    "comment": ""
+  },
+  {
+    "term": "(any of above)",
+    "definition": "（以上任何一项）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AnyOfAbove",
+    "comment": ""
+  },
+  {
+    "term": "Drag card by left edge",
+    "definition": "通过左边缘拖动卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DragCard",
+    "comment": ""
+  },
+  {
+    "term": "Search",
+    "definition": "搜索",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Search",
+    "comment": ""
+  },
+  {
+    "term": "Clear search, focus current card",
+    "definition": "清除搜索，聚焦当前卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ClearSearch",
+    "comment": ""
+  },
+  {
+    "term": "Merge card up",
+    "definition": "合并卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MergeCardUp",
+    "comment": ""
+  },
+  {
+    "term": "Merge card down",
+    "definition": "向下合并卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MergeCardDown",
+    "comment": ""
+  },
+  {
+    "term": "Copy current subtree",
+    "definition": "复制当前子树",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:CopyCurrent",
+    "comment": ""
+  },
+  {
+    "term": "Paste subtree below current card",
+    "definition": "在当前卡片下方粘贴子树",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:PasteBelow",
+    "comment": ""
+  },
+  {
+    "term": "Paste subtree as child of current card",
+    "definition": "将子树粘贴为当前卡的子树",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:PasteAsChild",
+    "comment": ""
+  },
+  {
+    "term": "Insert selected text as new card",
+    "definition": "插入选定的文本作为新卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:InsertSelected",
+    "comment": ""
+  },
+  {
+    "term": "Drag selected text into tree",
+    "definition": "将选定的文本拖入树中",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DragSelected",
+    "comment": ""
+  },
+  {
+    "term": "Word counts",
+    "definition": "字数",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:WordCounts",
+    "comment": ""
+  },
+  {
+    "term": "Switch to different document",
+    "definition": "切换到不同的文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SwitchDocuments",
+    "comment": ""
+  },
+  {
+    "term": "This help screen",
+    "definition": "帮助",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ThisHelpScreen",
+    "comment": ""
+  },
+  {
+    "term": " or ",
+    "definition": " 或者 ",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Or",
+    "comment": ""
+  },
+  {
+    "term": "Edit card in fullscreen mode",
+    "definition": "在全屏模式下编辑卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditCardFullscreen",
+    "comment": ""
+  },
+  {
+    "term": "Edit Cards",
+    "definition": "编辑卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditCards",
+    "comment": ""
+  },
+  {
+    "term": "Shift",
+    "definition": "转移",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ShiftKey",
+    "comment": ""
+  },
+  {
+    "term": "AltKey",
+    "definition": "ALT键",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AltKey",
+    "comment": ""
+  },
+  {
+    "term": "Navigate",
+    "definition": "导航",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Navigate",
+    "comment": ""
+  },
+  {
+    "term": "Add New Cards",
+    "definition": "添加新卡",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:AddNewCards",
+    "comment": ""
+  },
+  {
+    "term": "Split At Cursor",
+    "definition": "在光标处拆分",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SplitAtCursor",
+    "comment": ""
+  },
+  {
+    "term": "Merge Cards",
+    "definition": "合并卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MergeCards",
+    "comment": ""
+  },
+  {
+    "term": "Move & Delete Cards",
+    "definition": "移动和删除卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MoveAndDelete",
+    "comment": ""
+  },
+  {
+    "term": "Bold selection",
+    "definition": "粗体/加粗",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:BoldSelection",
+    "comment": ""
+  },
+  {
+    "term": "Italicize selection",
+    "definition": "斜体",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ItalicizeSelection",
+    "comment": ""
+  },
+  {
+    "term": "Save changes",
+    "definition": "保存更改",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SaveChanges",
+    "comment": ""
+  },
+  {
+    "term": "Save changes and exit card",
+    "definition": "保存更改并退出卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SaveChangesAndExit",
+    "comment": ""
+  },
+  {
+    "term": "Exit edit mode",
+    "definition": "退出编辑模式",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExitEditMode",
+    "comment": ""
+  },
+  {
+    "term": "Other Shortcuts",
+    "definition": "其他快捷键",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:OtherShortcuts",
+    "comment": ""
+  },
+  {
+    "term": "Display word counts",
+    "definition": "显示字数",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DisplayWordCounts",
+    "comment": ""
+  },
+  {
+    "term": "(Edit Mode)",
+    "definition": "（编辑模式）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:EditMode",
+    "comment": ""
+  },
+  {
+    "term": "Save/Cancel Changes",
+    "definition": "保存/取消更改",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SaveOrCancelChanges",
+    "comment": ""
+  },
+  {
+    "term": "Formatting",
+    "definition": "格式化",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Formatting",
+    "comment": ""
+  },
+  {
+    "term": "# Title\n## Subtitle",
+    "definition": "＃ 标题\n## 副标题",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:FormattingTitle",
+    "comment": ""
+  },
+  {
+    "term": "Set title level (# to #####)",
+    "definition": "设置标题级别（# 到 #####）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SetTitleLevel",
+    "comment": ""
+  },
+  {
+    "term": "- List item\n  - Subitem",
+    "definition": "- 项目清单\n  - 子项目",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:FormattingList",
+    "comment": ""
+  },
+  {
+    "term": "[link](http://t.co)",
+    "definition": "[链接](http://t.co)",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:FormattingLink",
+    "comment": ""
+  },
+  {
+    "term": "ParenNumber",
+    "definition": "父编号",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ParenNumber",
+    "comment": ""
+  },
+  {
+    "term": "SetHeadingLevel",
+    "definition": "设置标题级别",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:SetHeadingLevel",
+    "comment": ""
+  },
+  {
+    "term": "Help Videos",
+    "definition": "帮助视频",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:HelpVideos",
+    "comment": ""
+  },
+  {
+    "term": "FAQ & Documentation",
+    "definition": "常见问题和文档",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:FAQAndDocs",
+    "comment": ""
+  },
+  {
+    "term": "Open Quick Switcher",
+    "definition": "打开快速切换器",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:OpenQuickSwitcher",
+    "comment": ""
+  },
+  {
+    "term": "Contact Support",
+    "definition": "Email 支持",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ContactSupport",
+    "comment": ""
+  },
+  {
+    "term": "Version History",
+    "definition": "版本历史",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:VersionHistory",
+    "comment": ""
+  },
+  {
+    "term": "Document Settings",
+    "definition": "文档设置",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DocumentSettings",
+    "comment": ""
+  },
+  {
+    "term": "Word count...",
+    "definition": "字数...",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:WordCount",
+    "comment": ""
+  },
+  {
+    "term": "Total Cards in Tree : %1",
+    "definition": {
+      "other": "树中的卡片总数 : %1"
+    },
+    "context": "",
+    "term_plural": "Total Cards in Tree : %1",
+    "reference": "Elm:WordCountTotalCards",
+    "comment": ""
+  },
+  {
+    "term": "Document Theme",
+    "definition": "文档主题",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DocumentTheme",
+    "comment": ""
+  },
+  {
+    "term": "Default",
+    "definition": "默认",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ThemeDefault",
+    "comment": ""
+  },
+  {
+    "term": "Dark Mode",
+    "definition": "黑暗模式",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ThemeDarkMode",
+    "comment": ""
+  },
+  {
+    "term": "Classic Gingkoapp",
+    "definition": "经典银杏",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ThemeClassic",
+    "comment": ""
+  },
+  {
+    "term": "Gray",
+    "definition": "灰色的",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ThemeGray",
+    "comment": ""
+  },
+  {
+    "term": "Green",
+    "definition": "绿",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ThemeGreen",
+    "comment": ""
+  },
+  {
+    "term": "Turquoise",
+    "definition": "绿松石",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ThemeTurquoise",
+    "comment": ""
+  },
+  {
+    "term": "Export or Print",
+    "definition": "导出或打印",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportOrPrint",
+    "comment": ""
+  },
+  {
+    "term": "Everything",
+    "definition": "一切",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingEverything",
+    "comment": ""
+  },
+  {
+    "term": "All cards in the tree (in depth-first order)",
+    "definition": "树中的所有卡片（按深度优先顺序）",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingEverythingDesc",
+    "comment": ""
+  },
+  {
+    "term": "Current Subtree",
+    "definition": "当前子树",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingCurrentSubtree",
+    "comment": ""
+  },
+  {
+    "term": "Current card and all its children",
+    "definition": "当前卡及其所有子卡",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingCurrentSubtreeDesc",
+    "comment": ""
+  },
+  {
+    "term": "Leaves-only",
+    "definition": "只叶",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingLeavesOnly",
+    "comment": ""
+  },
+  {
+    "term": "Only cards without children",
+    "definition": "只有没有孩子的卡片",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingLeavesOnlyDesc",
+    "comment": ""
+  },
+  {
+    "term": "Current Column",
+    "definition": "当前列",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingCurrentColumn",
+    "comment": ""
+  },
+  {
+    "term": "Only carsd in the current (vertical) column",
+    "definition": "当前（垂直）列中只有卡",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingCurrentColumnDesc",
+    "comment": ""
+  },
+  {
+    "term": "Word",
+    "definition": "单词",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingWord",
+    "comment": ""
+  },
+  {
+    "term": "Plain Text",
+    "definition": "纯文本",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingPlainText",
+    "comment": ""
+  },
+  {
+    "term": "JSON",
+    "definition": "JSON",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingJSON",
+    "comment": ""
+  },
+  {
+    "term": "Download Word File",
+    "definition": "下载Word文件",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DownloadWordFile",
+    "comment": ""
+  },
+  {
+    "term": "Download Markdown text file",
+    "definition": "下载 Markdown 文本文件",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DownloadTextFile",
+    "comment": ""
+  },
+  {
+    "term": "Download JSON file",
+    "definition": "下载 JSON 文件",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DownloadJSONFile",
+    "comment": ""
+  },
+  {
+    "term": "Print this",
+    "definition": "打印这个",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:PrintThis",
+    "comment": ""
+  },
+  {
+    "term": "Upgrade",
+    "definition": "升级",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Upgrade",
+    "comment": ""
+  },
+  {
+    "term": "%1 day left in trial",
+    "definition": {
+      "other": "试用期还剩 %1 天"
+    },
+    "context": "",
+    "term_plural": "%1 days left in trial",
+    "reference": "Elm:DaysLeft",
+    "comment": ""
+  },
+  {
+    "term": "Trial Expired",
+    "definition": "试用期满",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:TrialExpired",
+    "comment": ""
+  },
+  {
+    "term": "Manage Subscription",
+    "definition": "管理订阅",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ManageSubscription",
+    "comment": ""
+  },
+  {
+    "term": "Duplicate Document",
+    "definition": "重复文件",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DuplicateDocument",
+    "comment": ""
+  },
+  {
+    "term": "Please confirm your email.",
+    "definition": "请确认你的电子邮件。",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ConfirmBannerStrong",
+    "comment": ""
+  },
+  {
+    "term": "We've sent instructions to ",
+    "definition": "我们已将说明发送至 ",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ConfirmBannerBody",
+    "comment": ""
+  },
+  {
+    "term": "Love Gingko Writer?",
+    "definition": "爱银杏作家？",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:WordOfMouthCTA1",
+    "comment": ""
+  },
+  {
+    "term": "Leave a Testimonial",
+    "definition": "留下推荐信",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:WordOfMouthCTA2",
+    "comment": ""
+  },
+  {
+    "term": "Loading...",
+    "definition": "正在加载...",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:Loading",
+    "comment": ""
+  },
+  {
+    "term": "Last synced",
+    "definition": "上次同步",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:LastSynced",
+    "comment": ""
+  },
+  {
+    "term": "Upgrade document to new format",
+    "definition": "将文档升级为新格式",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:MigrateTooltip",
+    "comment": ""
+  },
+  {
+    "term": "Card : %1 character",
+    "definition": {
+      "other": "卡：%1 个字符"
+    },
+    "context": "",
+    "term_plural": "Card : %1 characters",
+    "reference": "Elm:CharacterCountCard",
+    "comment": ""
+  },
+  {
+    "term": "Subtree : %1 character",
+    "definition": {
+      "other": "子树：%1 个字符"
+    },
+    "context": "",
+    "term_plural": "Subtree : %1 characters",
+    "reference": "Elm:CharacterCountSubtree",
+    "comment": ""
+  },
+  {
+    "term": "Group : %1 character",
+    "definition": {
+      "other": "组：%1 个字符"
+    },
+    "context": "",
+    "term_plural": "Group : %1 characters",
+    "reference": "Elm:CharacterCountGroup",
+    "comment": ""
+  },
+  {
+    "term": "Column : %1 character",
+    "definition": {
+      "other": "列：%1 个字符"
+    },
+    "context": "",
+    "term_plural": "Column : %1 characters",
+    "reference": "Elm:CharacterCountColumn",
+    "comment": ""
+  },
+  {
+    "term": "Total : %1 character",
+    "definition": {
+      "other": "总计：%1 个字符"
+    },
+    "context": "",
+    "term_plural": "Total : %1 characters",
+    "reference": "Elm:CharacterCountTotal",
+    "comment": ""
+  },
+  {
+    "term": "OPML",
+    "definition": "OPML",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:ExportSettingOPML",
+    "comment": ""
+  },
+  {
+    "term": "Close Export View",
+    "definition": "关闭导出视图",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:CloseExportView",
+    "comment": ""
+  },
+  {
+    "term": "Download OPML file",
+    "definition": "下载OPML文件",
+    "context": "",
+    "term_plural": "",
+    "reference": "Elm:DownloadOPMLFile",
+    "comment": ""
+  }
 ]

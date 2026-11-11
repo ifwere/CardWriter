@@ -24,34 +24,59 @@ export const LANGUAGES = fs
   .map((name) => name.slice(0, -".json".length))
   .sort();
 
+function escapeReplacement(value) {
+  return String(value).replace(/\n/g, "\\n").replace(/'/g, "\\'");
+}
+
+function hasText(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
 function prepTranslation(langCode, langData) {
   return langData.flatMap((t) => {
     const target = t.reference.replace("Elm:", `%${langCode}:`) + "%";
     const replacement = t.definition;
+    const isPluralEntry = hasText(t.term_plural);
 
-    if (typeof target === "string" && target.startsWith(`%${langCode}`) && typeof replacement === "string") {
-      return [{ search: target, replace: replacement.replace("\n", "\\n").replace(/'/g, "\\'") }];
+    // The Elm source uses explicit `:0` / `:1` tokens for plural messages.
+    // Some languages (ja, zh, pes, ...) only provide `other`, so both forms
+    // fall back to it instead of leaving a raw placeholder in the UI.
+    if (isPluralEntry) {
+      let singular = null;
+      let plural = null;
+
+      if (typeof replacement === "string") {
+        singular = replacement;
+        plural = replacement;
+      } else if (replacement && typeof replacement === "object") {
+        singular = hasText(replacement.one) ? replacement.one : replacement.other;
+        plural = hasText(replacement.other) ? replacement.other : replacement.one;
+      } else if (replacement === null) {
+        singular = t.term;
+        plural = t.term_plural;
+      }
+
+      if (!hasText(singular)) {
+        singular = t.term;
+        plural = t.term_plural;
+      }
+
+      if (hasText(singular)) {
+        const sing = escapeReplacement(singular);
+        const plur = escapeReplacement(hasText(plural) ? plural : singular);
+        return [
+          { search: target + ":0", replace: sing },
+          { search: target + ":1", replace: plur }
+        ];
+      }
+      return [];
     }
 
-    if (replacement === null) {
-      return [{ search: target, replace: t.term.replace(/'/g, "\\'") }];
+    if (typeof replacement === "string" && replacement.length > 0) {
+      return [{ search: target, replace: escapeReplacement(replacement) }];
     }
 
-    if (
-      Object.prototype.hasOwnProperty.call(t, "term_plural") &&
-      typeof replacement === "object" &&
-      replacement !== null &&
-      Object.prototype.hasOwnProperty.call(replacement, "one")
-    ) {
-      const singReplace = replacement.one.replace(/'/g, "\\'");
-      const plurReplace = (replacement.other.replace(/'/g, "\\'") || t.term_plural);
-      return [
-        { search: target + ":0", replace: singReplace },
-        { search: target + ":1", replace: plurReplace }
-      ];
-    }
-
-    return [];
+    return [{ search: target, replace: escapeReplacement(t.term) }];
   });
 }
 
@@ -64,13 +89,41 @@ export function buildReplacements() {
   const config = require(path.join(ROOT, "config.js"));
   const replacements = new Map();
 
+  /** @type {Map<string, Map<string, object>>} */
+  const entriesByLanguage = new Map();
+  /** English terms used when a language is missing a key entirely. */
+  const englishTerms = new Map();
+
   for (const langCode of LANGUAGES) {
     const langPath = path.join(ROOT, "i18n", `${langCode}.json`);
     const langData = JSON.parse(fs.readFileSync(langPath, "utf-8"));
-    for (const { search, replace } of prepTranslation(langCode, langData)) {
-      // First definition wins, matching the upstream sequential-replace pass.
-      if (typeof replace === "string" && !replacements.has(search)) {
-        replacements.set(search, replace);
+    const byReference = new Map();
+    for (const entry of langData) {
+      byReference.set(entry.reference, entry);
+      if (!englishTerms.has(entry.reference) || !hasText(englishTerms.get(entry.reference).term)) {
+        englishTerms.set(entry.reference, entry);
+      }
+    }
+    entriesByLanguage.set(langCode, byReference);
+  }
+
+  // Every key known in any language gets a token in every language. Missing
+  // translations fall back to the English term rather than shipping a raw
+  // `%lang:Key%` placeholder.
+  for (const langCode of LANGUAGES) {
+    const byReference = entriesByLanguage.get(langCode);
+    for (const [reference, englishEntry] of englishTerms) {
+      const entry = byReference.get(reference) || {
+        reference,
+        term: englishEntry.term,
+        term_plural: englishEntry.term_plural,
+        definition: null
+      };
+      for (const { search, replace } of prepTranslation(langCode, [entry])) {
+        // First definition wins, matching the upstream sequential-replace pass.
+        if (typeof replace === "string" && !replacements.has(search)) {
+          replacements.set(search, replace);
+        }
       }
     }
   }
