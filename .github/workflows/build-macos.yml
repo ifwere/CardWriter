@@ -38,6 +38,11 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Electron smoke tests
+        run: npm run test:e2e
+        env:
+          CI: "true"
+
       # Unsigned, unnotarized x64 dmg + zip.
       - name: Package for macOS
         run: npx electron-builder --mac --x64 --publish never

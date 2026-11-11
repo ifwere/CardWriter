@@ -3,8 +3,11 @@
 CardWriter is a standalone Electron port of the Gingko Writer desktop client,
 targeting **macOS 12 (Monterey) on Intel / x86_64**.
 
-The writing UI is the original Elm application from `../client/client`; the
-desktop shell is a rewrite that removes the native/server dependencies.
+The writing UI is the Elm application from the client's `redesktop` branch
+(product version 2.5.0, the last desktop build that matched its `Page.Doc`
+API). The current master `src/elm/Electron` entry is stale and does not
+compile against the current web Elm tree. The desktop shell is a rewrite that
+removes the native/server dependencies.
 
 ## Requirements
 
@@ -30,6 +33,9 @@ and not notarized, so on first launch use right-click → Open (or
 `xattr -dr com.apple.quarantine /Applications/CardWriter.app`).
 
 `minimumSystemVersion` is pinned to `12.0` and the build is x64-only.
+
+Support addresses and public URLs are build-time values in `config.js`; change
+`SUPPORT_EMAIL` / `SUPPORT_URGENT_EMAIL` before shipping.
 
 ## Tests
 

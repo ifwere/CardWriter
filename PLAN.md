@@ -42,6 +42,13 @@ macOS Intel runner 上构建并通过 Playwright 冒烟测试。
 
 ## 已验证事实
 
-- `src/elm/Electron/*.elm` 的 ports 与 `src/electron/*.js` 的 IPC 一一对应。
-- `ContactForm.view` 只使用 mailto 与复制邮箱，不存在表单 POST 依赖。
+- **master 的桌面 Elm 入口不可编译**：它 import 了 `Page.Doc.activate` /
+  `checkoutCommit`（已不再暴露），并期望旧的 `MsgToParent` 结构。
+- 与桌面版 2.5.0 匹配的最后一致快照是 `origin/redesktop`（2022-06-23，
+  package version 2.5.0）：其 `Electron.elm`、`Page.Doc`、`Doc.UI`、
+  `Doc.Fullscreen`、`Outgoing` 端口全部自洽。本仓库以该快照为 Elm 基线。
+- 快照的 ports（`SetDirty` / `CommitData` / `SaveToFile` / `ExportToFile`）
+  与 `src/electron/*.js` 的 IPC 一一对应。
+- 快照使用 MutationObserver + 原生 textarea（无 `gw-textarea` 自定义元素）。
 - 渲染进程粘贴/复制需要改走 preload 的 clipboard API（`file://` 下不可靠）。
+- 帮助窗口的 ports 与快照模块自洽；支持表单没有后端，改为 mailto。
