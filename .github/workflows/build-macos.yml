@@ -45,6 +45,14 @@ jobs:
         env:
           CI: "true"
 
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results
+          if-no-files-found: ignore
+
       # Unsigned, unnotarized x64 dmg + zip.
       - name: Package for macOS
         run: npx electron-builder --mac --x64 --publish never
