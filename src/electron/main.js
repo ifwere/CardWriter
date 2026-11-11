@@ -490,6 +490,10 @@ async function addToRecentDocuments(filePath) {
 function removeFromRecentDocuments(filePath) {
   recentDocuments = recentDocuments.filter((rd) => rd.path !== filePath);
   settings().set("recentDocuments", recentDocuments);
+  if (isMac) {
+    app.clearRecentDocuments();
+    for (const entry of recentDocuments) app.addRecentDocument(entry.path);
+  }
   refreshMenus();
 }
 

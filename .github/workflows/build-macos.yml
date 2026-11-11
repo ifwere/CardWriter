@@ -36,7 +36,9 @@ jobs:
           npm test
 
       - name: Build application
-        run: npm run build
+        run: |
+          chmod +x src/bin/mac/pandoc
+          npm run build
 
       - name: Electron smoke tests
         run: npm run test:e2e
