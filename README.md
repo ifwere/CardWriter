@@ -37,6 +37,16 @@ and not notarized, so on first launch use right-click → Open (or
 Support addresses and public URLs are build-time values in `config.js`; change
 `SUPPORT_EMAIL` / `SUPPORT_URGENT_EMAIL` before shipping.
 
+## Build on GitHub Actions
+
+`.github/workflows/build-macos.yml` runs on the Intel `macos-15-intel` runner,
+installs dependencies, runs the checks and tests, builds the app, runs the
+Playwright Electron smoke tests, and uploads the unsigned `.dmg` / `.zip`
+artifacts. Pushing to any branch triggers it.
+
+This workflow is the supported way to produce the macOS Intel build; it does
+not need a local macOS machine.
+
 ## Tests
 
 ```sh

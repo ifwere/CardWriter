@@ -27,6 +27,9 @@ let settingsStore = null;
 let recentDocuments = [];
 let pendingOpenPath = null;
 let elmWorker = null;
+// A close prompt can cancel the underlying `app.quit()`; remember the intent
+// so the quit can be resumed once the window is actually gone.
+let quitting = false;
 
 /**
  * @typedef {object} DocWindowData
@@ -462,9 +465,11 @@ async function saveDocumentAs(win) {
     oldWriter.flush();
     localStoreWriters.delete(origPath);
   }
-  if (origPath !== newPath && origPath.startsWith(app.getPath("temp"))) {
-    await fsp.rm(origPath, { force: true }).catch(() => {});
+  if (origPath !== newPath) {
     await fsp.rm(origPath + ".swp", { force: true }).catch(() => {});
+    if (origPath.startsWith(app.getPath("temp"))) {
+      await fsp.rm(origPath, { force: true }).catch(() => {});
+    }
   }
 
   // Move the version history to the new path.
@@ -631,8 +636,10 @@ ipcMain.on("flush-and-close", async (event) => {
       await fsp.copyFile(winData.filePath + ".swp", winData.filePath);
     }
     win.destroy();
+    if (quitting) app.quit();
   } catch (error) {
     console.error("[close] could not flush document", error);
+    quitting = false;
     dialog.showErrorBox("Could not save document", String(error && error.message ? error.message : error));
   }
 });
@@ -653,9 +660,17 @@ ipcMain.on("maybe-close-window", async (event) => {
 
   if (response === 0) {
     win.destroy();
+    if (quitting) app.quit();
   } else if (response === 2) {
     const saved = await saveDocumentAs(win);
-    if (saved) win.destroy();
+    if (saved) {
+      win.destroy();
+      if (quitting) app.quit();
+    } else {
+      quitting = false;
+    }
+  } else {
+    quitting = false;
   }
 });
 
@@ -872,6 +887,10 @@ app.whenReady().then(() => {
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createHomeWindow();
   });
+});
+
+app.on("before-quit", () => {
+  quitting = true;
 });
 
 app.on("window-all-closed", () => {
