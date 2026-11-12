@@ -53,8 +53,10 @@ Phase 2 is implemented locally and waits for the next green CI run.
 - [x] Port Markdown/OPML/JSON export helpers (`treeToMarkdownString`,
       `treeToOPML`, `treeToJSON`, `treeToValue`)
 - [x] Define the tree/card types shared by the editor and main process
-- [ ] Port tree operations needed by the editor (insert, split, merge, move,
-      delete, indent/outdent)
+- [x] Port structural tree operations (`Ins`, `Upd`, `Rmv`, `Mov`, `Mrg`,
+      `Paste`, lookups, preorder walk, `labelTree`)
+- [ ] Split-at-cursor, indent/outdent and clipboard semantics land with the
+      editor interactions in Phase 5
 - [ ] Port undo/redo selection semantics
 - [ ] Port the version object codecs (`ref`, `commit`, `tree`)
 - [ ] Preserve `last-actives` settings decoding

@@ -47,6 +47,7 @@ for (const input of [
   "src/renderer/support/SupportApp.tsx",
   "src/renderer/editor/model/coders.ts",
   "src/renderer/editor/model/tree.ts",
+  "src/renderer/editor/model/treeOps.ts",
   "src/renderer/shared/ModalFrame.tsx",
   "src/renderer/shared/api.ts",
   "src/renderer/shared/i18n.ts",
