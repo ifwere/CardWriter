@@ -43,10 +43,17 @@ async function openHelpWindow(menuId: string) {
     if (win && !win.isDestroyed()) win.focus();
     const item = Menu.getApplicationMenu()?.getMenuItemById(id);
     if (!item) throw new Error(`menu item ${id} not found`);
-    // Electron types require the (item, window, event) arguments, but the
-    // template handlers only read the window. Invoking with none opens the
-    // help window without a parent.
-    (item.click as unknown as () => void)();
+
+    // Simulate a menu click: Electron passes the focused window and its web
+    // contents to the template handler. The types require all three
+    // arguments, so call through a narrower signature.
+    const click = item.click as unknown as (
+      event: unknown,
+      window: unknown,
+      contents: unknown
+    ) => void;
+    const contents = win && !win.isDestroyed() ? win.webContents : undefined;
+    click(undefined, win, contents);
   }, menuId);
   const modal = await nextWindow;
   await modal.waitForLoadState("domcontentloaded");
