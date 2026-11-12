@@ -70,6 +70,22 @@ test("templates reference existing static assets", () => {
   }
 });
 
+test("help windows are rendered by React bundles", () => {
+  const htmlDir = path.join(ROOT, "src", "electron", "html");
+  const windows = [
+    ["shortcuts-modal.html", "shortcuts-modal.js"],
+    ["videos-modal.html", "videos-modal.js"],
+    ["support-modal.html", "support-modal.js"]
+  ];
+
+  for (const [template, bundle] of windows) {
+    const html = fs.readFileSync(path.join(htmlDir, template), "utf-8");
+    assert.ok(html.includes('<div id="root"></div>'), `${template} has no React root`);
+    assert.ok(html.includes(`<script src="./${bundle}"></script>`), `${template} does not load ${bundle}`);
+    assert.ok(!html.includes("elm-"), `${template} still references an Elm bundle`);
+  }
+});
+
 test("generated bundles and window templates share app/static", () => {
   assert.equal(STATIC, path.join(APP, "static"));
 
@@ -96,9 +112,6 @@ test("Elm sources needed by the desktop entries exist", () => {
   for (const entry of [
     "src/elm/Electron/Electron.elm",
     "src/elm/Electron/Home.elm",
-    "src/elm/Electron/ShortcutsModal.elm",
-    "src/elm/Electron/VideosModal.elm",
-    "src/elm/Electron/SupportModal.elm",
     "src/elm/Electron/Worker.elm",
     "src/elm/Page/Doc.elm"
   ]) {

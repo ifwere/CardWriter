@@ -83,14 +83,18 @@ npm run test:e2e   # Playwright + Electron smoke tests (needs a build)
 ```
 
 The E2E suite asserts that the Home window is rendered by React
-(`#container[data-renderer="react"]`) before opening a document.
+(`#container[data-renderer="react"]`) before opening a document, then opens the
+shortcuts, videos and support windows through their Help menu items.
 
 ## Layout
 
 ```
 src/renderer/          React 19 + TypeScript UI (migration in progress)
-  shared/              Typed preload API, i18n, Intl formatting
+  shared/              Typed preload API, i18n, Intl formatting, modal frame
   home/                React Home window
+  shortcuts/           Keyboard shortcut reference window
+  videos/              Help videos window
+  support/             Contact support window
 src/elm/               Legacy Elm editor (removed in the final phase)
 src/shared/            DOM helpers used by the Elm editor
 src/electron/          Main process (CommonJS), preload, menus, file I/O

@@ -15,9 +15,6 @@ export const STATIC = path.join(APP, "static");
 export const ELM_ENTRIES = [
   ["src/elm/Electron/Electron.elm", "elm-electron.js"],
   ["src/elm/Electron/Home.elm", "elm-home.js"],
-  ["src/elm/Electron/ShortcutsModal.elm", "elm-shortcuts.js"],
-  ["src/elm/Electron/VideosModal.elm", "elm-videos.js"],
-  ["src/elm/Electron/SupportModal.elm", "elm-support.js"],
   ["src/elm/Electron/Worker.elm", "elm-worker.js"]
 ];
 
@@ -37,9 +34,9 @@ export const PRELOAD_FILES = ["preload.js"];
 export const RENDERER_ENTRIES = {
   renderer: "src/electron/renderer.js",
   home: "src/renderer/home/main.tsx",
-  "shortcuts-modal": "src/electron/shortcuts-modal.js",
-  "videos-modal": "src/electron/videos-modal.js",
-  "support-modal": "src/electron/support-modal.js"
+  "shortcuts-modal": "src/renderer/shortcuts/main.tsx",
+  "videos-modal": "src/renderer/videos/main.tsx",
+  "support-modal": "src/renderer/support/main.tsx"
 };
 
 /** Every bundle name that a template can reference with `./`. */

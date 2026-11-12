@@ -124,10 +124,10 @@ function helpMenu(handlers) {
     label: "Help",
     role: "help",
     submenu: [
-      { label: "Keyboard Shortcuts", click: safe(handlers.clickedShowShortcuts) },
-      { label: "Help Videos", click: safe(handlers.clickedHelpVideos) },
-      { label: "FAQ & Documentation", click: safe(handlers.clickedFAQ) },
-      { label: "Contact Support", click: safe(handlers.clickedContactSupport) }
+      { id: "help-shortcuts", label: "Keyboard Shortcuts", click: safe(handlers.clickedShowShortcuts) },
+      { id: "help-videos", label: "Help Videos", click: safe(handlers.clickedHelpVideos) },
+      { id: "help-faq", label: "FAQ & Documentation", click: safe(handlers.clickedFAQ) },
+      { id: "help-support", label: "Contact Support", click: safe(handlers.clickedContactSupport) }
     ]
   };
 }

@@ -108,6 +108,21 @@ async function bundleRenderers() {
       "process.env.NODE_ENV": '"production"'
     }
   });
+
+  // React bundles can also contain `{%SUPPORT_EMAIL%}`-style build tokens.
+  const replacements = buildReplacements();
+  for (const name of Object.keys(RENDERER_ENTRIES)) {
+    const outPath = path.join(STATIC, `${name}.js`);
+    const code = fs.readFileSync(outPath, "utf-8");
+    const translated = applyTranslations(code, replacements);
+    const missing = findUnreplaced(translated);
+    if (missing.length > 0) {
+      throw new Error(
+        `Unreplaced translation placeholders in ${name}.js: ${[...new Set(missing)].slice(0, 10).join(", ")}`
+      );
+    }
+    fs.writeFileSync(outPath, translated);
+  }
 }
 
 async function main() {

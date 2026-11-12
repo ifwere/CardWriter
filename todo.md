@@ -13,31 +13,38 @@ Status of the Elm → React 19 + TypeScript migration. The plan lives in
       `#container[data-renderer="react"]`
 - [x] `npm run check` passes locally
 - [x] `npm test` passes locally (31 tests)
-- [ ] **CI verification of Phase 0/1** — blocked on a GitHub remote
-- [ ] `npm run typecheck` / `npm run build` / `npm run test:e2e` — not run yet
+- [x] **CI verification of Phase 0/1**:
+      [run 43147666793](https://github.com/ifwere/CardWriter/actions/runs/43147666793)
+      - `check`, `typecheck`, 31 unit tests, build and E2E (2/2) pass
+      - React Home bundle loads under the CSP (`home.js` 789.8kb)
+      - Electron 32.3.3 x64 dmg + zip built unsigned and uploaded
+        (`CardWriter-macos-x64`, ~236 MB)
+
+Phase 2 is implemented locally and waits for the next green CI run.
 
 ## Immediate blockers
 
-- [ ] Add a GitHub remote and push `master`; the workflow runs on push
-- [ ] Make `npm run typecheck` pass in CI
-- [ ] Make the React Home bundle load under the existing CSP
-- [ ] Make both Playwright tests pass with the React Home
-- [ ] Save the first green Actions run URL here for reference
-
-If `typecheck` or the Home bundle fails, fix the foundation before starting
-Phase 2.
+- [ ] Push Phase 2 and confirm the new help-window E2E test passes
+- [ ] Compact the i18n catalogs so the React Home bundle stops shipping all
+      18 languages (see technical debt below)
 
 ## Phase 2 — React help windows
 
-- [ ] Port the shortcuts window (`Doc.HelpScreen.viewShortcuts`) to React
-      - preserve the shortcut table, `isMac` Ctrl/Cmd labels, i18n keys
-      - reuse `shortcuts-modal.css`
-- [ ] Port the videos window (`Doc.VideoViewer`) to React
-- [ ] Port the support window; keep the `mailto:` + `shell.openExternal` flow
-- [ ] Keep `faq-modal.html` as static HTML (it only contains links)
-- [ ] Switch the three templates to React bundles
-- [ ] Update `build-inputs.mjs`, `check.mjs`, unit tests and E2E
-- [ ] Remove the Elm modal entries from `ELM_ENTRIES` once parity is verified
+- [x] Port the shortcuts window (`Doc.HelpScreen.viewShortcuts`) to React
+      - all 7 tables, `isMac` Ctrl/Cmd labels and i18n keys preserved
+      - reuses `shortcuts-modal.css`
+- [x] Port the videos window (`Doc.VideoViewer`) to React
+      - four items, active state and the Vimeo iframe preserved
+- [x] Port the support window; `mailto:` + `shell.openExternal` preserved
+      - build tokens `{%SUPPORT_EMAIL%}` / `{%SUPPORT_URGENT_EMAIL%}` are now
+        substituted into React bundles too
+- [x] Keep `faq-modal.html` as static HTML (it only contains links)
+- [x] Switch the three templates to React bundles
+- [x] Update `build-inputs.mjs`, `check.mjs`, unit tests and E2E
+      - new E2E opens all three windows through their menu items
+- [x] Remove the Elm modal entries from `ELM_ENTRIES`
+- [x] Delete the legacy `src/electron/*-modal.js` shells
+- [ ] CI verification of Phase 2 (pending push)
 
 ## Phase 3 — TypeScript core model (no UI)
 

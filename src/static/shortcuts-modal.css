@@ -14,3 +14,6 @@ body {
   display: none;
 }
 
+
+/* The React root must not add a layout box; match the Elm document body. */
+#root { display: contents; }
