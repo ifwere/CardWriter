@@ -90,6 +90,16 @@ test("round-trips arbitrary card content", () => {
   }
 });
 
+test("CRLF-separated tags keep the padding (Elm trim parity)", () => {
+  // The Elm parser only unwraps "\n\n", so CRLF documents keep the blank line
+  // padding in the card content. Pin that behavior instead of "fixing" it.
+  const input = '<gingko-card id="1">\r\n\r\nHello\r\n\r\n</gingko-card>\r\n';
+  const parsed = normalizeAndParse(input);
+
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.trees[0].content, "\r\n\r\nHello\r\n\r\n");
+});
+
 test("round-trips a whole tree", () => {
   const tree = makeTree("0", "Root", [
     makeTree("1", "First"),
