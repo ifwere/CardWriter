@@ -157,6 +157,64 @@ export function applyTreeCommand(command: TreeCommand, tree: Tree): Tree {
   }
 }
 
+/* ================= Split at cursor ================= */
+
+/**
+ * `Ctrl/Cmd+J` while editing: the current card keeps the text before the
+ * cursor and a new sibling below receives the text after it.
+ */
+export function splitBelow(
+  id: string,
+  newId: string,
+  before: string,
+  after: string,
+  tree: Tree
+): Tree {
+  const parent = getParent(id, tree);
+  const index = getIndex(id, tree);
+  const updated = modifyTree(id, (node) => ({ ...node, content: before }), tree);
+  if (!parent || index === undefined) return updated;
+  return insertSubtree({ id: newId, content: after, children: [] }, parent.id, index + 1, updated);
+}
+
+/**
+ * `Ctrl/Cmd+K` while editing: a new sibling above receives the text before the
+ * cursor and the current card keeps the text after it.
+ */
+export function splitAbove(
+  id: string,
+  newId: string,
+  before: string,
+  after: string,
+  tree: Tree
+): Tree {
+  const parent = getParent(id, tree);
+  const index = getIndex(id, tree);
+  const updated = modifyTree(id, (node) => ({ ...node, content: after }), tree);
+  if (!parent || index === undefined) return updated;
+  return insertSubtree({ id: newId, content: before, children: [] }, parent.id, index, updated);
+}
+
+/**
+ * `Ctrl/Cmd+L` while editing: the current card keeps the text before the
+ * cursor and a new child receives the text after it.
+ */
+export function splitRight(
+  id: string,
+  newId: string,
+  before: string,
+  after: string,
+  tree: Tree
+): Tree {
+  const updated = modifyTree(id, (node) => ({ ...node, content: before }), tree);
+  return insertSubtree(
+    { id: newId, content: after, children: [] },
+    id,
+    Number.MAX_SAFE_INTEGER,
+    updated
+  );
+}
+
 /** Re-labels ids as `<parent>.<index>` (used by importers and tests). */
 export function labelTree(index: number, parentId: string, tree: Tree): Tree {
   const id = `${parentId}.${index}`;

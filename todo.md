@@ -55,11 +55,15 @@ Phase 2 is implemented locally and waits for the next green CI run.
 - [x] Define the tree/card types shared by the editor and main process
 - [x] Port structural tree operations (`Ins`, `Upd`, `Rmv`, `Mov`, `Mrg`,
       `Paste`, lookups, preorder walk, `labelTree`)
-- [ ] Split-at-cursor, indent/outdent and clipboard semantics land with the
-      editor interactions in Phase 5
-- [ ] Port undo/redo selection semantics
-- [ ] Port the version object codecs (`ref`, `commit`, `tree`)
-- [ ] Preserve `last-actives` settings decoding
+- [x] Split-at-cursor helpers (`splitBelow`, `splitAbove`, `splitRight`)
+- [x] Text helpers: word/character counts, surround selection, heading levels,
+      checkbox toggling
+- [x] Column layout and navigation helpers (`treeView.ts`: `getColumns`,
+      depth, prev/next in column, column edges)
+- [ ] Clipboard subtree copy/paste semantics land with Phase 5
+- [ ] Keep version objects and undo in the main process (`commit.js`,
+      `version-store.js`); the renderer only exchanges IPC payloads
+- [ ] Decode `last-actives` from the document payload (Phase 4 startup)
 - [x] Golden fixtures: nested cards, code blocks, emphasis, empty cards,
       Chinese/emoji, CRLF, cards containing literal `<gingko-card` text
 - [x] Round-trip tests: canonical parse → serialize is byte-identical, and

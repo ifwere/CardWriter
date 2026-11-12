@@ -19,7 +19,10 @@ import {
   modifyTree,
   moveSubtree,
   preorderTraversal,
-  pruneSubtree
+  pruneSubtree,
+  splitAbove,
+  splitBelow,
+  splitRight
 } from "../../src/renderer/editor/model/treeOps.ts";
 
 function fixture() {
@@ -164,6 +167,38 @@ test("applies editor commands", () => {
     tree
   );
   assert.equal(getTree("1", merged)?.content, "B\n\nA");
+});
+
+test("splits a card below, above and to the right", () => {
+  const tree = fixture();
+
+  const below = splitBelow("1", "new", "before", "after", tree);
+  assert.equal(getTree("1", below)?.content, "before");
+  assert.deepEqual(below.children.map((node) => node.id), ["1", "new", "2"]);
+  assert.equal(getTree("new", below)?.content, "after");
+  assert.deepEqual(
+    getTree("1", below)?.children.map((node) => node.id),
+    ["3"]
+  );
+
+  const above = splitAbove("1", "new", "before", "after", tree);
+  assert.equal(getTree("1", above)?.content, "after");
+  assert.deepEqual(above.children.map((node) => node.id), ["new", "1", "2"]);
+  assert.equal(getTree("new", above)?.content, "before");
+
+  const right = splitRight("1", "new", "before", "after", tree);
+  assert.equal(getTree("1", right)?.content, "before");
+  assert.deepEqual(
+    getTree("1", right)?.children.map((node) => node.id),
+    ["3", "new"]
+  );
+  assert.equal(getTree("new", right)?.content, "after");
+});
+
+test("splitting the root only updates its content", () => {
+  const tree = fixture();
+  assert.equal(getTree("0", splitBelow("0", "new", "x", "y", tree))?.content, "x");
+  assert.equal(getTree("0", splitAbove("0", "new", "x", "y", tree))?.content, "y");
 });
 
 test("labels trees using parent and index", () => {
