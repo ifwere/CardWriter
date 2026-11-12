@@ -95,6 +95,7 @@ src/renderer/          React 19 + TypeScript UI (migration in progress)
   shortcuts/           Keyboard shortcut reference window
   videos/              Help videos window
   support/             Contact support window
+  editor/model/        Pure TS tree + `.gkw` codec (unit-tested)
 src/elm/               Legacy Elm editor (removed in the final phase)
 src/shared/            DOM helpers used by the Elm editor
 src/electron/          Main process (CommonJS), preload, menus, file I/O

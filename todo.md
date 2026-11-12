@@ -48,19 +48,22 @@ Phase 2 is implemented locally and waits for the next green CI run.
 
 ## Phase 3 — TypeScript core model (no UI)
 
-- [ ] Port `Coders.normalizeInput` / `normalizeAndParse` to TypeScript
-- [ ] Port `treeToMarkdownOutline` with byte-identical output
-- [ ] Define the tree/card types shared by the editor and main process
+- [x] Port `Coders.normalizeInput` / `normalizeAndParse` to TypeScript
+- [x] Port `treeToMarkdownOutline` with byte-identical output
+- [x] Port Markdown/OPML/JSON export helpers (`treeToMarkdownString`,
+      `treeToOPML`, `treeToJSON`, `treeToValue`)
+- [x] Define the tree/card types shared by the editor and main process
 - [ ] Port tree operations needed by the editor (insert, split, merge, move,
       delete, indent/outdent)
 - [ ] Port undo/redo selection semantics
 - [ ] Port the version object codecs (`ref`, `commit`, `tree`)
 - [ ] Preserve `last-actives` settings decoding
-- [ ] Golden fixtures: nested cards, code blocks, emphasis, empty cards,
+- [x] Golden fixtures: nested cards, code blocks, emphasis, empty cards,
       Chinese/emoji, CRLF, cards containing literal `<gingko-card` text
-- [ ] Round-trip tests: parse → serialize must equal the original bytes
-- [ ] Keep pure model modules free of Electron/React imports so `node --test`
-      can run them via Node's TypeScript stripping
+- [x] Round-trip tests: canonical parse → serialize is byte-identical, and
+      every content case survives serialize → parse unchanged
+- [x] Keep pure model modules free of Electron/React imports so `node --test`
+      can run them via Node's TypeScript stripping (`tests/unit/coders.test.mjs`)
 
 ## Phase 4 — React document shell
 
