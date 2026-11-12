@@ -100,6 +100,7 @@ async function bundleRenderers() {
     platform: "browser",
     format: "iife",
     target: ["chrome128"],
+    jsx: "automatic",
     minify: true,
     sourcemap: false,
     logLevel: "info",

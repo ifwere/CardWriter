@@ -51,13 +51,19 @@ not need a local macOS machine.
 
 ```sh
 npm run check      # structural / dependency checks
+npm run typecheck  # TypeScript type checking
 npm test           # unit tests (no npm install needed)
 npm run test:e2e   # Playwright + Electron smoke tests (CI)
 ```
 
+The renderer is being migrated from Elm to React 19 + TypeScript; see
+`REWRITE_PLAN.md` for the phases. During the migration the Home window is
+already React, while document windows still use the Elm editor.
+
 ## Layout
 
 ```
+src/renderer/       React 19 + TypeScript renderer (migration in progress)
 src/elm/            Elm application (desktop entry points in src/elm/Electron)
 src/shared/         DOM helpers shared with the Elm UI
 src/electron/       Main process (CommonJS), preload, renderer glue, modals

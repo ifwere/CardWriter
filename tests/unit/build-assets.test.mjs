@@ -5,7 +5,12 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-import { APP, STATIC, GENERATED_BUNDLES } from "../../scripts/build-inputs.mjs";
+import {
+  APP,
+  STATIC,
+  GENERATED_BUNDLES,
+  RENDERER_ENTRIES
+} from "../../scripts/build-inputs.mjs";
 
 const ROOT = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf-8"));
@@ -26,6 +31,12 @@ test("every main-process module parses", () => {
   assert.ok(files.length >= 8);
   for (const file of files) {
     execFileSync(process.execPath, ["--check", path.join(dir, file)], { stdio: "pipe" });
+  }
+});
+
+test("renderer entry points exist", () => {
+  for (const [name, source] of Object.entries(RENDERER_ENTRIES)) {
+    assert.ok(fs.existsSync(path.join(ROOT, source)), `${name} entry is missing: ${source}`);
   }
 });
 

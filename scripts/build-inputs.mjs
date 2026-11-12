@@ -36,7 +36,7 @@ export const PRELOAD_FILES = ["preload.js"];
 
 export const RENDERER_ENTRIES = {
   renderer: "src/electron/renderer.js",
-  home: "src/electron/home.js",
+  home: "src/renderer/home/main.tsx",
   "shortcuts-modal": "src/electron/shortcuts-modal.js",
   "videos-modal": "src/electron/videos-modal.js",
   "support-modal": "src/electron/support-modal.js"

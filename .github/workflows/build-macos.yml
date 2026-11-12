@@ -30,9 +30,10 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Checks and unit tests
+      - name: Checks, typecheck and unit tests
         run: |
           npm run check
+          npm run typecheck
           npm test
 
       - name: Build application

@@ -19,7 +19,9 @@ test("home window renders and opens a new document", async () => {
   const home = await app.firstWindow();
   await home.waitForLoadState("domcontentloaded");
 
-  // The New Document tile is rendered by the Elm Home app.
+  // The Home window must be rendered by the React bundle.
+  await expect(home.locator('#container[data-renderer="react"]')).toBeVisible();
+
   const newTile = home.locator("#template-new");
   await expect(newTile).toBeVisible();
 
@@ -38,6 +40,7 @@ test("typing into a new card updates the document", async () => {
   app = await electron.launch({ args: [APP_ROOT] });
 
   const home = await app.firstWindow();
+  await expect(home.locator('#container[data-renderer="react"]')).toBeVisible();
   await expect(home.locator("#template-new")).toBeVisible();
 
   const nextWindow = app.waitForEvent("window");

@@ -13,17 +13,25 @@
     "dist:mac": "npm run build && electron-builder --mac --x64",
     "test": "node --test",
     "test:e2e": "playwright test",
-    "check": "node scripts/check.mjs"
+    "check": "node scripts/check.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "electron": "^32.0.0",
     "electron-builder": "^25.1.8",
     "elm": "0.19.1-6",
     "esbuild": "^0.24.0",
     "gsap": "^3.12.5",
+    "immer": "^10.0.0",
     "lodash": "^4.17.21",
-    "mousetrap": "^1.6.5"
+    "mousetrap": "^1.6.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "zustand": "^5.0.0"
   },
   "build": {
     "appId": "com.cardwriter.desktop",

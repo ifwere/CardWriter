@@ -40,11 +40,15 @@ for (const input of [
   "src/elm/Electron/SupportModal.elm",
   "src/elm/Electron/Worker.elm",
   "src/electron/renderer.js",
-  "src/electron/home.js",
+  "src/renderer/home/main.tsx",
+  "src/renderer/home/HomeApp.tsx",
+  "src/renderer/shared/api.ts",
+  "src/renderer/shared/i18n.ts",
   "src/static/style.css",
   "src/bin/mac/pandoc",
   "config.js",
-  "elm.json"
+  "elm.json",
+  "tsconfig.json"
 ]) {
   if (!fs.existsSync(path.join(ROOT, input))) fail(`missing build input ${input}`);
 }
