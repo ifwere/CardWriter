@@ -6,7 +6,13 @@
 // children still occupy a group so the columns stay aligned.
 
 import type { Tree } from "./tree.ts";
-import { getChildren, getSiblings } from "./treeOps.ts";
+import {
+  getChildren,
+  getDescendants,
+  getParent,
+  getSiblings,
+  preorderTraversal
+} from "./treeOps.ts";
 
 /** One column: the child groups of every card in the previous column. */
 export type Column = Tree[][];
@@ -104,4 +110,115 @@ export function getLastInColumn(id: string, tree: Tree): string {
 
 export function getFirstCard(tree: Tree): Tree | undefined {
   return getChildren(tree)[0];
+}
+
+/* ================= Ancestors and scroll targets ================= */
+
+/** Root-first path of ancestors, excluding the card itself (`getAncestors`). */
+export function getAncestors(all: Tree, target: Tree): Tree[] {
+  const ancestors: Tree[] = [];
+  let current = getParent(target.id, all);
+  while (current) {
+    ancestors.unshift(current);
+    current = getParent(current.id, all);
+  }
+  return ancestors;
+}
+
+export type ScrollPosition =
+  | { position: "Center"; target: string }
+  | { position: "Before"; target: string }
+  | { position: "After"; target: string }
+  | { position: "Between"; target: string; target2: string }
+  | { position: "None" };
+
+export interface ColumnScroll {
+  columnIdx: number;
+  scrollData: ScrollPosition;
+}
+
+function sortChildrenBy(trees: Tree[], score: (tree: Tree) => number): Tree[] {
+  return trees
+    .map((tree) => ({ tree, key: score(tree) }))
+    .sort((a, b) => a.key - b.key)
+    .map(({ tree }) => ({ ...tree, children: sortChildrenBy(tree.children, score) }));
+}
+
+function findId(ids: string[], id: string): string | undefined {
+  return ids.includes(id) ? id : undefined;
+}
+
+/**
+ * Target card per column when the active card changes (`getScrollPositions`).
+ *
+ * Columns are searched in priority order: the active card itself, then an
+ * ancestor, then the most recently active descendant, then any descendant,
+ * then the surrounding cards. The root column is dropped.
+ */
+export function getScrollPositions(
+  activeTree: Tree,
+  activePastIds: string[],
+  fullTree: Tree
+): ColumnScroll[] {
+  const ancestorIds = getAncestors(fullTree, activeTree).map((tree) => tree.id);
+  const descendantIds = getDescendants(activeTree).map((tree) => tree.id);
+
+  const score = (tree: Tree): number => {
+    const index = activePastIds.indexOf(tree.id);
+    return index === -1 ? 9999 : index;
+  };
+
+  const historyOrder = getColumns([[[sortChildrenBy([fullTree], score)[0]]]])
+    .map((column) => column.flat().map((card) => card.id))
+    .flat()
+    .filter((id) => descendantIds.includes(id));
+
+  const preordered = preorderTraversal(fullTree);
+  const activeIndex = Math.max(preordered.indexOf(activeTree.id), 0);
+
+  const exclude = (ids: string[], list: string[]) => list.filter((id) => !ids.includes(id));
+  const afterIds = exclude(
+    [...descendantIds, ...ancestorIds, activeTree.id],
+    preordered.slice(activeIndex + 1)
+  );
+  const beforeIds = exclude(
+    [...descendantIds, ...ancestorIds, activeTree.id],
+    preordered.slice(0, activeIndex)
+  );
+
+  const flatColumns = getColumns([[[fullTree]]]).map((column) =>
+    column.flat().map((card) => card.id)
+  );
+
+  const firstMatch = (ids: string[], column: string[]): string | undefined =>
+    column.find((id) => ids.includes(id));
+
+  return flatColumns.slice(1).map((column, index) => {
+    const center =
+      findId(column, activeTree.id) ??
+      firstMatch(ancestorIds, column) ??
+      firstMatch(historyOrder, column) ??
+      firstMatch(descendantIds, column);
+
+    if (center) {
+      return { columnIdx: index + 1, scrollData: { position: "Center", target: center } };
+    }
+
+    const before = firstMatch(beforeIds, column);
+    const after = firstMatch(afterIds, [...column].reverse());
+
+    if (after && before) {
+      return {
+        columnIdx: index + 1,
+        scrollData: { position: "Between", target: after, target2: before }
+      };
+    }
+    if (before) {
+      return { columnIdx: index + 1, scrollData: { position: "Before", target: before } };
+    }
+    if (after) {
+      return { columnIdx: index + 1, scrollData: { position: "After", target: after } };
+    }
+    return { columnIdx: index + 1, scrollData: { position: "None" } };
+  });
 }

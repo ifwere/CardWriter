@@ -50,7 +50,7 @@ function fileMenu(handlers, { isMac, isHome, isUntitled, recentDocuments }) {
       click: safe(handlers.clickedSaveAs)
     });
     items.push({ type: "separator" });
-    items.push({ label: "Export…", click: safe(handlers.clickedExport) });
+    items.push({ id: "file-export", label: "Export…", click: safe(handlers.clickedExport) });
     items.push({ type: "separator" });
     items.push({ label: "Close Window", accelerator: "CmdOrCtrl+W", click: safe(handlers.clickedClose) });
   }

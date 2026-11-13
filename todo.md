@@ -11,20 +11,25 @@ Status of the Elm → React 19 + TypeScript migration. The plan lives in
 - [x] Phase 1: React Home window (new/open/import, recent documents, remove)
 - [x] Phase 1: Home switched to the React bundle; E2E asserts
       `#container[data-renderer="react"]`
-- [x] `npm run check` passes locally
-- [x] `npm test` passes locally (31 tests)
 - [x] **CI verification of Phase 0/1**:
       [run 43147666793](https://github.com/ifwere/CardWriter/actions/runs/43147666793)
       - `check`, `typecheck`, 31 unit tests, build and E2E (2/2) pass
       - React Home bundle loads under the CSP (`home.js` 789.8kb)
       - Electron 32.3.3 x64 dmg + zip built unsigned and uploaded
         (`CardWriter-macos-x64`, ~236 MB)
+- [x] Phase 2: React help windows (shortcuts, videos, support)
+- [x] Phase 3: TypeScript core model
+- [x] Phase 4: React document shell — the document window now loads
+      `editor.js` only; `"Elm" in window === false`
+- [x] Local gate green after Phase 4: `check`, `typecheck`, 92 unit tests,
+      `build`, 9 E2E tests
 
-Phase 2 is implemented locally and waits for the next green CI run.
+Phases 2–4 are implemented and verified locally but have not been pushed: this
+checkout has no git remote configured.
 
 ## Immediate blockers
 
-- [ ] Push Phase 2 and confirm the new help-window E2E test passes
+- [ ] Push Phases 2–4 and confirm CI is green (dmg/zip + E2E on macOS 12)
 - [ ] Compact the i18n catalogs so the React Home bundle stops shipping all
       18 languages (see technical debt below)
 
@@ -60,10 +65,10 @@ Phase 2 is implemented locally and waits for the next green CI run.
       checkbox toggling
 - [x] Column layout and navigation helpers (`treeView.ts`: `getColumns`,
       depth, prev/next in column, column edges)
-- [ ] Clipboard subtree copy/paste semantics land with Phase 5
+- [x] Clipboard subtree copy/paste semantics land with Phase 5
 - [ ] Keep version objects and undo in the main process (`commit.js`,
       `version-store.js`); the renderer only exchanges IPC payloads
-- [ ] Decode `last-actives` from the document payload (Phase 4 startup)
+- [x] Decode `last-actives` from the document payload (Phase 4 startup)
 - [x] Golden fixtures: nested cards, code blocks, emphasis, empty cards,
       Chinese/emoji, CRLF, cards containing literal `<gingko-card` text
 - [x] Round-trip tests: canonical parse → serialize is byte-identical, and
@@ -73,25 +78,41 @@ Phase 2 is implemented locally and waits for the next green CI run.
 
 ## Phase 4 — React document shell
 
-- [ ] Document window layout: columns, cards, active card, scrolling
-- [ ] Zustand + Immer document store with selector-based subscriptions
-- [ ] Card component and per-card textarea editing
-- [ ] Selection and edit/read mode transitions
-- [ ] File-save indicator and dirty state
-- [ ] Fullscreen mode
-- [ ] Reuse `style.css` / `desktop.css` class names and DOM ids
+- [x] Document window layout: columns, cards, active card, scrolling
+      - `TreeView` reproduces `treeView` / `viewColumn` / `viewGroup`, including
+        the empty-group alignment, fillets and the `ancestor` / `has-children`
+        card classes
+- [x] Zustand document store with selector-based subscriptions
+      - mirrors `Page.Doc.Model`; no Immer needed because `treeOps` already
+        returns new trees
+- [x] Card component and per-card textarea editing
+- [x] Selection and edit/read mode transitions (`normal` / `editing` /
+      `fullscreen`)
+- [x] File-save indicator and dirty state
+- [x] Fullscreen mode
+- [x] Reuse `style.css` / `desktop.css` class names and DOM ids
+      - E2E asserts the same ids the Elm build produced
+- [x] Markdown rendering through `marked` with the three `Doc.UI` rewrites
+      (diff markers, checkboxes, `sanitize = False`)
 
 ## Phase 5 — Interaction parity
 
-- [ ] Keyboard shortcuts (`Mousetrap` behavior, textarea exceptions)
-- [ ] Drag/drop with `@dnd-kit/core`
-- [ ] Clipboard: JSON subtree copy/paste, plain-text paste
-- [ ] Text surround, checkbox toggles, cursor placement
-- [ ] Autosave: `SaveToFile` timing and `.swp` writes
-- [ ] `CommitData` on the same triggers as `LocalSaveDo` / `CommitDo`
-- [ ] Close/quit prompts: unsaved untitled document, dirty saved document
-- [ ] Menu acceleration rules (`registerAccelerator: false` for edit actions)
+- [x] Keyboard shortcuts (`Mousetrap` behavior, textarea exceptions)
+- [x] Drag/drop — implemented with native HTML5 drag events rather than
+      `@dnd-kit/core`; the Elm view also used the native drag API and the
+      existing `drag-region` / `drop-region-*` CSS, so this keeps the DOM
+      contract and drops a dependency
+- [x] Clipboard: JSON subtree copy/paste, plain-text paste
+- [x] Text surround, checkbox toggles, cursor placement
+- [x] Autosave: `SaveToFile` timing and `.swp` writes
+      - 500 ms quiet debounce before `save-file`, matching `LocalSaveDo`
+- [x] `CommitData` on the same triggers as `LocalSaveDo` / `CommitDo`
+      - 3 s throttle, parented on `heads/master`
+- [x] Close/quit prompts: unsaved untitled document, dirty saved document
+- [x] Menu acceleration rules (`registerAccelerator: false` for edit actions)
 - [ ] Anchor/header navigation and scroll restoration
+      - `getScrollPositions` is ported and unit-tested, but the columns do not
+        yet scroll to the active card
 
 ## Phase 6 — History, import, export
 
@@ -125,11 +146,11 @@ Phase 2 is implemented locally and waits for the next green CI run.
 
 ## Test matrix per phase
 
-- [ ] `npm run check`
-- [ ] `npm run typecheck`
-- [ ] `npm test`
-- [ ] `npm run build`
-- [ ] `npm run test:e2e`
+- [x] `npm run check`
+- [x] `npm run typecheck`
+- [x] `npm test` (92 tests)
+- [x] `npm run build`
+- [x] `npm run test:e2e` (9 tests)
 - [ ] GitHub Actions `macos-15-intel` artifacts
 
 ## Technical debt / follow-ups
@@ -160,3 +181,4 @@ should leave room for them later:
 - Keep the old Elm path runnable until its replacement passes CI.
 - Never change on-disk formats without a migration and round-trip tests.
 - No native modules; no local build environment required.
+

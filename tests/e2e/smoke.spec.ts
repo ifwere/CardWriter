@@ -101,3 +101,146 @@ test("typing into a new card updates the document", async () => {
   await textarea.fill("Hello from the smoke test");
   await expect(textarea).toHaveValue("Hello from the smoke test");
 });
+
+/** Opens a fresh untitled document in the launched app. */
+async function openNewDocument() {
+  const home = await app.firstWindow();
+  await expect(home.locator('#container[data-renderer="react"]')).toBeVisible();
+
+  const nextWindow = app.waitForEvent("window");
+  await home.locator("#template-new").click();
+  const doc = await nextWindow;
+  await doc.waitForLoadState("domcontentloaded");
+  await expect(doc.locator("textarea").first()).toBeVisible();
+  return doc;
+}
+
+test("the document window is rendered by React", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  // No Elm runtime and no Elm bundle: the page loads only editor.js.
+  const scripts = await doc.evaluate(() =>
+    Array.from(document.querySelectorAll("script")).map((s) => s.getAttribute("src"))
+  );
+  expect(scripts).toEqual(["./editor.js"]);
+  expect(await doc.evaluate(() => "Elm" in window)).toBe(false);
+
+  await expect(doc.locator("#desktop-root")).toBeVisible();
+  await expect(doc.locator("#document #column-container .column")).toHaveCount(1);
+  await expect(doc.locator("#file-save-indicator")).toHaveText("All Changes Saved");
+});
+
+test("saving a card renders Markdown and shows the breadcrumb", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  await doc.locator("textarea").first().fill("# Heading\n\nSome **bold** text");
+  await doc.keyboard.press("Control+Enter");
+
+  const card = doc.locator("#card-1");
+  await expect(card).toHaveClass(/card active/);
+  await expect(card).not.toHaveClass(/editing/);
+  await expect(card.locator(".view h1")).toHaveText("Heading");
+  await expect(card.locator(".view strong")).toHaveText("bold");
+
+  await expect(doc.locator("#breadcrumbs div span").last()).toHaveText("# Heading");
+});
+
+test("inserting a child card creates a second column", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  await doc.locator("textarea").first().fill("Root");
+  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press("Control+L");
+
+  // A new empty card is opened for editing in the next column.
+  await expect(doc.locator("#column-container .column")).toHaveCount(2);
+  const child = doc.locator("#column-container .column").nth(1).locator("textarea");
+  await expect(child).toBeFocused();
+
+  await child.fill("Child");
+  await doc.keyboard.press("Control+Enter");
+  await expect(
+    doc.locator("#column-container .column").nth(1).locator(".card .view")
+  ).toHaveText("Child");
+
+  // The parent keeps its content and is marked as an ancestor.
+  await expect(doc.locator("#card-1")).toHaveClass(/ancestor/);
+  await expect(doc.locator("#card-1 .view")).toHaveText("Root");
+});
+
+test("keyboard navigation moves the active card", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  await doc.locator("textarea").first().fill("Root");
+  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press("Control+L");
+  await doc.locator("textarea").first().fill("Child");
+  await doc.keyboard.press("Control+Enter");
+
+  // The child is active; `ArrowLeft` goes back to the parent.
+  await expect(doc.locator(".card.active .view")).toHaveText("Child");
+  await doc.keyboard.press("ArrowLeft");
+  await expect(doc.locator(".card.active .view")).toHaveText("Root");
+
+  // `ArrowRight` returns to the (most recently active) child.
+  await doc.keyboard.press("ArrowRight");
+  await expect(doc.locator(".card.active .view")).toHaveText("Child");
+});
+
+test("the export menu previews and exports the document", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  // The export menu lays its two toggle groups out at fixed widths (4 × 150px
+  // + 4 × 100px), so it needs more than the 800px default window to fit. This
+  // matches the Elm build, which shares the same stylesheet.
+  await app.evaluate(({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows().find((w) =>
+      w.webContents.getURL().includes("renderer.html")
+    );
+    win?.setContentSize(1200, 800);
+  });
+
+  await doc.locator("textarea").first().fill("Exportable");
+  await doc.keyboard.press("Control+Enter");
+
+  await app.evaluate(({ Menu, BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0];
+    const item = Menu.getApplicationMenu()?.getMenuItemById("file-export");
+    if (!item) throw new Error("export menu item not found");
+    (item.click as unknown as (e: unknown, w: unknown) => void)(undefined, win);
+  });
+
+  const preview = doc.locator("#export-preview");
+  await expect(preview).toBeVisible();
+  await expect(preview.locator(".plain")).toHaveText("Exportable");
+
+  // Switching to JSON changes the preview and the extension.
+  await doc.locator("#export-format-json").click();
+  await expect(preview.locator(".plain")).toContainText('"content": "Exportable"');
+
+  await expect(doc.locator("#export-menu")).toBeVisible();
+  await doc.locator("#export-button-close").click();
+  await expect(doc.locator("#export-preview")).toHaveCount(0);
+});
+
+test("fullscreen editing replaces the columns", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  await doc.locator("textarea").first().fill("Fullscreen text");
+  await doc.keyboard.press("Control+Enter");
+
+  await doc.keyboard.press("Shift+Enter");
+  await expect(doc.locator("#app-fullscreen")).toBeVisible();
+  await expect(doc.locator("#fullscreen-buttons")).toBeVisible();
+  await expect(doc.locator("#column-container")).toHaveCount(0);
+  await expect(doc.locator("#app-fullscreen textarea")).toHaveValue("Fullscreen text");
+
+  await doc.locator("#fullscreen-exit").click();
+  await expect(doc.locator("#column-container")).toBeVisible();
+});

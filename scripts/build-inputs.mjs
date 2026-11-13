@@ -13,7 +13,6 @@ export const APP = path.join(ROOT, "app");
 export const STATIC = path.join(APP, "static");
 
 export const ELM_ENTRIES = [
-  ["src/elm/Electron/Electron.elm", "elm-electron.js"],
   ["src/elm/Electron/Home.elm", "elm-home.js"],
   ["src/elm/Electron/Worker.elm", "elm-worker.js"]
 ];
@@ -32,7 +31,7 @@ export const MAIN_FILES = [
 export const PRELOAD_FILES = ["preload.js"];
 
 export const RENDERER_ENTRIES = {
-  renderer: "src/electron/renderer.js",
+  editor: "src/renderer/editor/main.tsx",
   home: "src/renderer/home/main.tsx",
   "shortcuts-modal": "src/renderer/shortcuts/main.tsx",
   "videos-modal": "src/renderer/videos/main.tsx",

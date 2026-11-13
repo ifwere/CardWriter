@@ -235,3 +235,9 @@ export function getDescendants(tree: Tree): Tree[] {
   if (tree.children.length === 0) return [];
   return tree.children.flatMap((child) => [child, ...getDescendants(child)]);
 }
+
+/** Cards without children, in document order (`Doc.TreeUtils.getLeaves`). */
+export function getLeaves(tree: Tree, accum: Tree[] = []): Tree[] {
+  if (tree.children.length === 0) return [...accum, tree];
+  return tree.children.reduce((acc, child) => getLeaves(child, acc), accum);
+}
