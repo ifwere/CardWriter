@@ -17,6 +17,7 @@ import { MobileButtons } from "./MobileButtons.tsx";
 import { SaveIndicator } from "./SaveIndicator.tsx";
 import { SearchField } from "./SearchField.tsx";
 import { TreeView } from "./TreeView.tsx";
+import { useScrollEffects } from "../dom/useScrollEffects.ts";
 
 /** Converts a parsed document into the editor's single-root tree. */
 export function documentTreeFromMarkdown(markdown: string | null): Tree {
@@ -40,6 +41,8 @@ export function EditorApp() {
   const [exportOpen, setExportOpen] = useState(false);
   const [exportSelection, setExportSelection] = useState<ExportSelection>("everything");
   const [exportFormat, setExportFormat] = useState<ExportFormat>("docx");
+
+  useScrollEffects();
 
   // `clicked-export` from the File menu opens the preview.
   useEffect(() => {

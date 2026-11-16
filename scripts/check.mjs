@@ -64,6 +64,8 @@ for (const input of [
   "src/renderer/editor/model/export.ts",
   "src/renderer/editor/model/history.ts",
   "src/renderer/editor/state/documentStore.ts",
+  "src/renderer/editor/dom/viewport.ts",
+  "src/renderer/editor/dom/useScrollEffects.ts",
   "src/renderer/shared/ModalFrame.tsx",
   "src/renderer/shared/api.ts",
   "src/renderer/shared/i18n.ts",

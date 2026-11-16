@@ -244,3 +244,35 @@ test("fullscreen editing replaces the columns", async () => {
   await doc.locator("#fullscreen-exit").click();
   await expect(doc.locator("#column-container")).toBeVisible();
 });
+
+test("navigating a tall column scrolls it to keep the active card in view", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  // Seed the first card, then build a tall column by inserting siblings.
+  await doc.locator("textarea").first().fill("Seed");
+  await doc.keyboard.press("Control+Enter");
+  for (let i = 0; i < 40; i++) {
+    await doc.keyboard.press("Control+j"); // insert below (opens editing)
+    await doc.keyboard.press("Control+Enter"); // save
+  }
+
+  const column = doc.locator("#column-container > .column").first();
+  await expect(column.locator(".card")).toHaveCount(41);
+
+  // Walking down must push the column down with the active card. Start from the
+  // top so the delta is unambiguous.
+  await doc.keyboard.press("Home");
+  await doc.waitForTimeout(600);
+  const initial = await column.evaluate((el) => el.scrollTop);
+  for (let i = 0; i < 40; i++) await doc.keyboard.press("ArrowDown");
+  await doc.waitForTimeout(600); // let the 250 ms scroll tween settle
+  const atBottom = await column.evaluate((el) => el.scrollTop);
+  expect(atBottom).toBeGreaterThan(initial);
+
+  // Walking back up restores the top.
+  for (let i = 0; i < 40; i++) await doc.keyboard.press("ArrowUp");
+  await doc.waitForTimeout(600);
+  const atTop = await column.evaluate((el) => el.scrollTop);
+  expect(atTop).toBeLessThan(atBottom);
+});

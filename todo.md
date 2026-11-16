@@ -110,9 +110,15 @@ checkout has no git remote configured.
       - 3 s throttle, parented on `heads/master`
 - [x] Close/quit prompts: unsaved untitled document, dirty saved document
 - [x] Menu acceleration rules (`registerAccelerator: false` for edit actions)
-- [ ] Anchor/header navigation and scroll restoration
-      - `getScrollPositions` is ported and unit-tested, but the columns do not
-        yet scroll to the active card
+- [x] Anchor/header navigation and scroll restoration
+      - `getScrollPositions` drives `dom/viewport.ts` (`applyScroll`,
+        `scrollFullscreenTo`, `updateFillets`) ported from the legacy renderer's
+        GSAP helpers, with a tiny rAF tween replacing the GSAP dependency
+      - `useScrollEffects` scrolls on init/activation, centres the card on
+        entering fullscreen, realigns on exit, and persists `last-actives`
+        through the debounced `local-store-set` channel
+      - E2E: navigating a 41-card column scrolls it to keep the active card in
+        view
 
 ## Phase 6 — History, import, export
 
