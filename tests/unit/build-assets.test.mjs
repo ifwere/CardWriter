@@ -97,8 +97,12 @@ test("generated bundles and window templates share app/static", () => {
     );
   }
   assert.ok(
-    mainSource.includes('require("./static/elm-worker.js")'),
-    "worker bundle is not loaded from app/static"
+    mainSource.includes('require("./import-single")'),
+    "main process does not load the JSON importer"
+  );
+  assert.ok(
+    !mainSource.includes("elm-worker"),
+    "main process still references the Elm worker bundle"
   );
 });
 

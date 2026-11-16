@@ -13,8 +13,7 @@ export const APP = path.join(ROOT, "app");
 export const STATIC = path.join(APP, "static");
 
 export const ELM_ENTRIES = [
-  ["src/elm/Electron/Home.elm", "elm-home.js"],
-  ["src/elm/Electron/Worker.elm", "elm-worker.js"]
+  ["src/elm/Electron/Home.elm", "elm-home.js"]
 ];
 
 /** Main-process modules are plain CommonJS; they are copied verbatim. */
@@ -22,6 +21,7 @@ export const MAIN_FILES = [
   "main.js",
   "menu.js",
   "commit.js",
+  "import-single.js",
   "pandoc.js",
   "version-store.js",
   "store.js",

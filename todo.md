@@ -124,8 +124,18 @@ checkout has no git remote configured.
 
 - [ ] Version-history slider and commit checkout/restore
 - [ ] History rendering from grouped `ref` / `commit` / `tree` objects
-- [ ] Export preview and DOCX export through pandoc
-- [ ] Replace `elm-worker.js` with a TypeScript JSON importer
+- [x] Export preview and DOCX export through pandoc (export menu from Phase 4;
+      DOCX goes through the main-process pandoc)
+- [x] Replace `elm-worker.js` with a Node importer
+      - `src/electron/import-single.js` ports `Import.Single.decoder` +
+        `Coders.treeToMarkdownOutline`: JSON arrays of `{ content, children }`
+        are re-labelled in preorder, renumbered to `node-<sha1(salt+id)>` with
+        a fresh 5-char salt, and serialized to the canonical outline
+      - `main.js` imports JSON synchronously; the Elm worker bootstrap is gone
+      - `build-inputs.mjs` / `check.mjs` drop the Worker entry; only the Home
+        Elm bundle remains
+      - unit tests (`import-single.test.mjs`) lock the outline shape and id
+        uniqueness/rejections
 - [ ] Verify `.gko` behavior matches the current port
 
 ## Phase 7 — Remove Elm

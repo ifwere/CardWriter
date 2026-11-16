@@ -10,6 +10,7 @@ const Store = require("./store");
 const VersionStore = require("./version-store");
 const commitTree = require("./commit");
 const exportDocx = require("./pandoc");
+const { importSingle } = require("./import-single");
 const { getHomeMenuTemplate, getDocMenuTemplate } = require("./menu");
 const { debounce, groupBy, omit, versionDirName } = require("./util");
 
@@ -26,7 +27,6 @@ let homeWindow = null;
 let settingsStore = null;
 let recentDocuments = [];
 let pendingOpenPath = null;
-let elmWorker = null;
 // A close prompt can cancel the underlying `app.quit()`; remember the intent
 // so the quit can be resumed once the window is actually gone.
 let quitting = false;
@@ -581,11 +581,18 @@ async function importJson(win, fromHomePage) {
   if (result.canceled || result.filePaths.length === 0) return;
 
   const fileData = await fsp.readFile(result.filePaths[0], "utf-8");
-  if (!elmWorker) {
-    dialog.showErrorBox("Import Error", "The import worker is not ready.");
+
+  let markdown;
+  try {
+    markdown = importSingle(fileData);
+  } catch (error) {
+    dialog.showErrorBox("Import Error", String(error && error.message ? error.message : error));
     return;
   }
-  elmWorker.ports.toElm.send([fileData, Boolean(fromHomePage)]);
+
+  const newWin = createDocWindow(null, markdown);
+  if (fromHomePage && homeWindow && !homeWindow.isDestroyed()) destroyWindow(homeWindow);
+  if (newWin) newWin.focus();
 }
 
 /* ================= IPC: windows ================= */
@@ -861,28 +868,6 @@ app.whenReady().then(() => {
 
   if (initialPath) createDocWindow(initialPath);
   else createHomeWindow();
-
-  // Elm worker for JSON imports.
-  try {
-    const { Elm } = require("./static/elm-worker.js");
-    elmWorker = Elm.Electron.Worker.init({ flags: Date.now() });
-    elmWorker.ports.fromElm.subscribe((elmData) => {
-      switch (elmData[0]) {
-        case "ImportDone": {
-          const imported = elmData[1];
-          const win = createDocWindow(null, imported.data);
-          if (imported.fromHomePage && homeWindow && !homeWindow.isDestroyed()) destroyWindow(homeWindow);
-          if (win) win.focus();
-          break;
-        }
-        case "ImportError":
-          dialog.showErrorBox("Import Error", String(elmData[1]));
-          break;
-      }
-    });
-  } catch (error) {
-    console.error("[import] worker unavailable", error);
-  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createHomeWindow();
