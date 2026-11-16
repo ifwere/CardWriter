@@ -122,8 +122,17 @@ checkout has no git remote configured.
 
 ## Phase 6 — History, import, export
 
-- [ ] Version-history slider and commit checkout/restore
-- [ ] History rendering from grouped `ref` / `commit` / `tree` objects
+- [x] Version-history slider and commit checkout/restore
+      - `HistoryMenu` (`#history-menu` / `#history-slider` / `#history-restore` /
+        `#history-close-button`) renders the saved commits oldest→newest and
+        lets the user restore one; the working tree is replaced and re-committed
+      - `history.ts` reconstructs any commit's tree (`treeFromCommit`) and
+        builds the ordered commit list (`historyList`)
+      - the save indicator hides while the menu is open so it does not swallow
+        the restore click
+- [x] History rendering from grouped `ref` / `commit` / `tree` objects
+      - `decodeHistory` / `mergeHistory` already feed the store; the slider
+        reads the same merged `HistoryData`
 - [x] Export preview and DOCX export through pandoc (export menu from Phase 4;
       DOCX goes through the main-process pandoc)
 - [x] Replace `elm-worker.js` with a Node importer

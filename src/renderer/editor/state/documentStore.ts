@@ -38,9 +38,11 @@ import { treeToMarkdownOutline, treeToValue } from "../model/coders.ts";
 import {
   decodeHistory,
   emptyHistory,
+  headSha,
   lastCommitTime,
   mergeHistory,
   requestCommit,
+  treeFromCommit,
   type HistoryData
 } from "../model/history.ts";
 
@@ -79,6 +81,13 @@ export interface DocumentState {
   dragging: string | null;
   /** `kind:cardId` of the hovered drop region. */
   dropTarget: string | null;
+
+  /** Whether the version-history menu is open. */
+  historyOpen: boolean;
+  /** Raised history slider bound: the commit the history starts from. */
+  historyStart: string;
+  /** The commit the slider currently points at (previewed). */
+  historyCurrent: string;
 
   init(payload: FileReceivedPayload, tree: Tree, language: string, isMac: boolean): void;
   tick(now: number): void;
@@ -127,6 +136,11 @@ export interface DocumentState {
 
   markFileSaved(path: string, savedAt: number, isUntitled: boolean): void;
   mergeCommitResult(payload: unknown): void;
+
+  openHistory(): void;
+  closeHistory(): void;
+  previewHistory(commitSha: string): void;
+  restoreHistory(): void;
 }
 
 /* ================= Helpers ================= */
@@ -345,6 +359,9 @@ export const useDocument = create<DocumentState>((set, get) => {
     ready: false,
     dragging: null,
     dropTarget: null,
+    historyOpen: false,
+    historyStart: "",
+    historyCurrent: "",
 
     init(payload, tree, language, isMac) {
       const history = decodeHistory(payload.undoData);
@@ -367,6 +384,8 @@ export const useDocument = create<DocumentState>((set, get) => {
         // An untitled document has not been written to its real file yet, but
         // the swap file already holds this content, so it is not "dirty".
         dirty: false,
+        historyStart: headSha(history) ?? "",
+        historyCurrent: "",
         currentTime: Date.now()
       });
     },
@@ -681,6 +700,35 @@ export const useDocument = create<DocumentState>((set, get) => {
     mergeCommitResult(payload) {
       const history = mergeHistory(get().history, decodeHistory(payload));
       set({ history, dirty: false, lastCommit: lastCommitTime(history) ?? null });
+    },
+
+    openHistory() {
+      const state = get();
+      const start = state.historyStart || headSha(state.history) || "";
+      const current = start;
+      // Peak at the newest commit so the slider starts on the current version.
+      set({ historyOpen: true, historyStart: start, historyCurrent: current });
+    },
+
+    closeHistory() {
+      set({ historyOpen: false });
+    },
+
+    previewHistory(commitSha) {
+      set({ historyCurrent: commitSha });
+    },
+
+    restoreHistory() {
+      const state = get();
+      if (!state.historyCurrent) return;
+      const tree = treeFromCommit(state.historyCurrent, state.history);
+      if (!tree) return;
+
+      // Replace the working tree with the restored version and treat it as a
+      // structural edit: the existing save/commit timers persist it and open a
+      // new branch on the restored commit.
+      commitTreeChange(tree, { viewMode: "normal", field: "" });
+      set({ historyOpen: false, tree });
     }
   };
 });

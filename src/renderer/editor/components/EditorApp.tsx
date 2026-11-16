@@ -16,6 +16,7 @@ import { FullscreenEditor } from "./FullscreenEditor.tsx";
 import { MobileButtons } from "./MobileButtons.tsx";
 import { SaveIndicator } from "./SaveIndicator.tsx";
 import { SearchField } from "./SearchField.tsx";
+import { HistoryMenu } from "./HistoryMenu.tsx";
 import { TreeView } from "./TreeView.tsx";
 import { useScrollEffects } from "../dom/useScrollEffects.ts";
 
@@ -37,6 +38,8 @@ export function documentTreeFromMarkdown(markdown: string | null): Tree {
 export function EditorApp() {
   const ready = useDocument((state) => state.ready);
   const viewMode = useDocument((state) => state.viewMode);
+  const historyOpen = useDocument((state) => state.historyOpen);
+  const openHistory = useDocument((state) => state.openHistory);
 
   const [exportOpen, setExportOpen] = useState(false);
   const [exportSelection, setExportSelection] = useState<ExportSelection>("everything");
@@ -93,6 +96,22 @@ export function EditorApp() {
   return (
     <div id="desktop-root">
       <SaveIndicator />
+      {historyOpen ? (
+        <HistoryMenu />
+      ) : (
+        <div
+          id="history-icon"
+          title="Version History"
+          onClick={openHistory}
+          style={{ position: "fixed", top: 8, left: 10, cursor: "pointer", fill: "var(--normal-text-color)", zIndex: 5 }}
+        >
+          <svg viewBox="0 0 16 16" width={16} height={16} aria-hidden="true">
+            <path
+              d="M8 1.5a6.5 6.5 0 1 0 6.5 6.5 6.508 6.508 0 0 0-6.5-6.5zm.5 3v3l2.26 1.35a.5.5 0 1 1-.51.86L7.7 8.2a.5.5 0 0 1-.2-.4V4.5a.5.5 0 0 1 1 0z"
+            />
+          </svg>
+        </div>
+      )}
 
       {viewMode === "fullscreen" ? (
         <FullscreenEditor />

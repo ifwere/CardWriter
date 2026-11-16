@@ -52,6 +52,7 @@ for (const input of [
   "src/renderer/editor/components/SearchField.tsx",
   "src/renderer/editor/components/MobileButtons.tsx",
   "src/renderer/editor/components/FullscreenEditor.tsx",
+  "src/renderer/editor/components/HistoryMenu.tsx",
   "src/renderer/editor/components/ExportMenu.tsx",
   "src/renderer/editor/components/icons.tsx",
   "src/renderer/editor/model/coders.ts",

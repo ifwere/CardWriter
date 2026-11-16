@@ -10,6 +10,7 @@ import { formatRelative } from "../../shared/i18n.ts";
 export function SaveIndicator() {
   const dirty = useDocument((state) => state.dirty);
   const viewMode = useDocument((state) => state.viewMode);
+  const historyOpen = useDocument((state) => state.historyOpen);
   const lastSave = useDocument((state) => state.lastSave);
   const currentTime = useDocument((state) => state.currentTime);
   const language = useDocument((state) => state.language);
@@ -25,7 +26,7 @@ export function SaveIndicator() {
   return (
     <div
       id="file-save-indicator"
-      className={`${dirty ? "dirty" : ""}${viewMode === "fullscreen" ? " fullscreen" : ""}`}
+      className={`${dirty ? "dirty" : ""}${viewMode === "fullscreen" ? " fullscreen" : ""}${historyOpen ? " hidden" : ""}`}
       title={lastSaveInWords}
     >
       {dirty ? "Unsaved changes..." : "All Changes Saved"}

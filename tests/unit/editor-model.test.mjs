@@ -14,9 +14,11 @@ import {
   decodeHistory,
   emptyHistory,
   headSha,
+  historyList,
   lastCommitTime,
   mergeHistory,
-  requestCommit
+  requestCommit,
+  treeFromCommit
 } from "../../src/renderer/editor/model/history.ts";
 
 /* ================= Markdown ================= */
@@ -207,4 +209,39 @@ test("builds the commit request with the head as its parent", () => {
 
 test("a document without history commits with no parents", () => {
   assert.deepEqual(requestCommit({}, emptyHistory(), '""').parents, []);
+});
+
+test("rebuilds the tree a commit recorded", () => {
+  const history = decodeHistory(GROUPED);
+  // t2: root "Root" with one child (id 1) pointing at t1 "Child".
+  const c1 = treeFromCommit("c1", history);
+  assert.deepEqual(c1, { id: "0", content: "Child", children: [] });
+
+  const c2 = treeFromCommit("c2", history);
+  assert.deepEqual(c2, {
+    id: "0",
+    content: "Root",
+    children: [{ id: "1", content: "Child", children: [] }]
+  });
+});
+
+test("rebuilding an unknown commit returns undefined", () => {
+  const history = decodeHistory(GROUPED);
+  assert.equal(treeFromCommit("missing", history), undefined);
+});
+
+test("historyList orders commits oldest-first ending at the start sha", () => {
+  const history = decodeHistory(GROUPED);
+  const list = historyList("c2", history);
+  // c1 (1000) then c2 (2000).
+  assert.deepEqual(
+    list.map((entry) => entry.sha),
+    ["c1", "c2"]
+  );
+  assert.equal(list[0].tree.content, "Child");
+  assert.equal(list[1].tree.content, "Root");
+});
+
+test("historyList with no commits is empty", () => {
+  assert.deepEqual(historyList("whatever", emptyHistory()), []);
 });

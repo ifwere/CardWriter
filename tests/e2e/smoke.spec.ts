@@ -276,3 +276,40 @@ test("navigating a tall column scrolls it to keep the active card in view", asyn
   const atTop = await column.evaluate((el) => el.scrollTop);
   expect(atTop).toBeLessThan(atBottom);
 });
+
+test("the version-history slider lists commits and restores one", async () => {
+  app = await electron.launch({ args: [APP_ROOT] });
+  const doc = await openNewDocument();
+
+  // Two commits: an initial empty one and one carrying card A.
+  await doc.locator("textarea").first().fill("Wanted Old");
+  await doc.keyboard.press("Control+Enter");
+  await doc.waitForTimeout(4500); // commit throttle (3 s) + margin
+
+  // Add a second, newer commit.
+  await doc.keyboard.press("Control+j"); // insert below (editing)
+  await doc.locator("textarea").first().fill("Newest Card");
+  await doc.keyboard.press("Control+Enter");
+  await doc.waitForTimeout(4500);
+
+  // Open the history menu. Its slider tracks the saved commits.
+  await doc.locator("#history-icon").click();
+  await expect(doc.locator("#history-menu")).toBeVisible();
+  const rangeMax = Number(await doc.locator("#history-slider").evaluate((el) => el.max));
+  expect(rangeMax).toBeGreaterThanOrEqual(1);
+
+  // Move the slider to the oldest commit (0) and restore it.
+  await doc.locator("#history-slider").evaluate((el) => {
+    el.value = "0";
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await expect(doc.locator("#history-time-info")).toBeVisible();
+  await doc.locator("#history-restore").click();
+
+  // Restoring replaces the working tree with the oldest commit's content.
+  await expect(doc.locator("#history-menu")).toHaveCount(0);
+  await expect(doc.locator("#column-container .card .view").first()).toContainText(
+    "Wanted Old"
+  );
+});

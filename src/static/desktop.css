@@ -45,6 +45,9 @@
   font-weight: bold;
   font-style: normal;
 }
+#file-save-indicator.hidden {
+  display: none;
+}
 #file-save-indicator.fullscreen {
   transition: opacity 2s 1s ease-in;
 }

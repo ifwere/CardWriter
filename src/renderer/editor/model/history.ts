@@ -6,6 +6,8 @@
 // computation and `objects.log` writes); this module only prepares the payload
 // and mirrors the object shapes so the store can read `heads/master`.
 
+import type { Tree } from "./tree.ts";
+
 export interface RefObject {
   value: string;
   ancestors: string[];
@@ -120,6 +122,60 @@ export function headSha(history: HistoryData): string | undefined {
 export function lastCommitTime(history: HistoryData): number | undefined {
   const times = Object.values(history.commits).map((commit) => commit.timestamp);
   return times.length > 0 ? Math.max(...times) : undefined;
+}
+
+/** A tree object by sha, filling in missing entries as empty. */
+function treeBySha(sha: string, history: HistoryData): TreeObject {
+  return history.trees[sha] ?? { content: "", children: [] };
+}
+
+/**
+ * Rebuilds the document tree a commit recorded (`Data.checkoutCommit` +
+ * `treeObjectsToTree`). The returned root uses id `"0"` with an empty content,
+ * matching how documents are stored; `undefined` when the commit's tree is not
+ * fully present.
+ */
+export function treeFromCommit(commitSha: string, history: HistoryData): Tree | undefined {
+  const commit = history.commits[commitSha];
+  if (!commit) return undefined;
+  return subtreeFromObjects(commit.tree, "0", history);
+}
+
+function subtreeFromObjects(treeSha: string, id: string, history: HistoryData): Tree | undefined {
+  const tree = treeBySha(treeSha, history);
+  // A missing subtree is treated as a leaf only when we have a tree object; an
+  // entirely absent object means the history is incomplete, so bail out.
+  if (!(treeSha in history.trees)) return undefined;
+  const children: Tree[] = [];
+  for (const [childTreeSha, childId] of tree.children) {
+    const child = subtreeFromObjects(childTreeSha, childId, history);
+    if (!child) return undefined;
+    children.push(child);
+  }
+  return { id, content: tree.content, children };
+}
+
+/**
+ * Commits that make up the version history, oldest first, ending at `startSha`
+ * (`Doc.Data.historyList`). Each entry pairs a commit sha with its object.
+ */
+export function historyList(
+  startSha: string,
+  history: HistoryData
+): { sha: string; commit: CommitObject; tree: Tree }[] {
+  const commits = Object.entries(history.commits);
+  const before = commits
+    .filter(([sha]) => sha !== startSha)
+    .sort((a, b) => a[1].timestamp - b[1].timestamp);
+  const startTuples: [string, CommitObject][] = startSha in history.commits ? [[startSha, history.commits[startSha]]] : [];
+  const entries = [...before, ...startTuples];
+  const out: { sha: string; commit: CommitObject; tree: Tree }[] = [];
+  for (const [sha, commit] of entries) {
+    const tree = treeFromCommit(sha, history);
+    if (!tree) continue;
+    out.push({ sha, commit, tree });
+  }
+  return out;
 }
 
 /**
