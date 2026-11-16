@@ -145,7 +145,11 @@ checkout has no git remote configured.
         Elm bundle remains
       - unit tests (`import-single.test.mjs`) lock the outline shape and id
         uniqueness/rejections
-- [ ] Verify `.gko` behavior matches the current port
+- [x] Verify `.gko` behavior matches the current port
+      - `.gko` is read as text exactly like `.gkw` (`createDocWindow` does not
+        branch on extension); a legacy `.gko` with a `gingko-card` outline
+        opens in the React document and its cards render and edit
+      - E2E: launch the app on a `.gko` file and assert the read view + edit
 
 ## Phase 7 — Remove Elm
 

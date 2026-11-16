@@ -1,5 +1,7 @@
 import { test, expect, _electron as electron, ElectronApplication } from "@playwright/test";
 import path from "node:path";
+import fs from "node:fs";
+import os from "node:os";
 
 const APP_ROOT = path.resolve(__dirname, "..", "..");
 
@@ -312,4 +314,35 @@ test("the version-history slider lists commits and restores one", async () => {
   await expect(doc.locator("#column-container .card .view").first()).toContainText(
     "Wanted Old"
   );
+});
+
+test("a legacy .gko file opens as text and renders its cards", async () => {
+  // Write a Gingko Desktop legacy file: a plain markdown outline. The app
+  // reads .gko as text (no format conversion) and renders it exactly like a
+  // .gkw. A real outline is rootless: it holds the cards directly.
+  const gkoPath = path.join(os.tmpdir(), `legacy-${Date.now()}.gko`);
+  fs.writeFileSync(
+    gkoPath,
+    "<gingko-card id=\"1\">\n\nLegacy Gingko Card\n\n</gingko-card>\n",
+    "utf-8"
+  );
+
+  app = await electron.launch({ args: [APP_ROOT, gkoPath] });
+
+  // Launching with a file opens the document window directly (no Home). A
+  // persisted document starts in the read ("normal") view, so the card renders
+  // as a `.view` (not a textarea) until a card is opened for editing.
+  const doc = await app.firstWindow();
+  await doc.waitForLoadState("domcontentloaded");
+
+  // The React renderer must have parsed the .gko outline into a card.
+  await expect(doc.locator("#column-container .card .view").first()).toContainText(
+    "Legacy Gingko Card"
+  );
+
+  // And it is editable: opening the card turns the view into a textarea.
+  await doc.locator("#column-container .card .view").first().dblclick();
+  await expect(doc.locator("textarea").first()).toHaveValue("Legacy Gingko Card");
+
+  fs.unlinkSync(gkoPath);
 });
