@@ -12,10 +12,6 @@ export const APP = path.join(ROOT, "app");
 // relative paths, so every generated bundle lives beside them.
 export const STATIC = path.join(APP, "static");
 
-export const ELM_ENTRIES = [
-  ["src/elm/Electron/Home.elm", "elm-home.js"]
-];
-
 /** Main-process modules are plain CommonJS; they are copied verbatim. */
 export const MAIN_FILES = [
   "main.js",
@@ -39,7 +35,6 @@ export const RENDERER_ENTRIES = {
 };
 
 /** Every bundle name that a template can reference with `./`. */
-export const GENERATED_BUNDLES = new Set([
-  ...ELM_ENTRIES.map(([, output]) => output),
-  ...Object.keys(RENDERER_ENTRIES).map((name) => `${name}.js`)
-]);
+export const GENERATED_BUNDLES = new Set(
+  Object.keys(RENDERER_ENTRIES).map((name) => `${name}.js`)
+);

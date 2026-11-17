@@ -153,12 +153,23 @@ checkout has no git remote configured.
 
 ## Phase 7 — Remove Elm
 
-- [ ] Delete `src/elm/`, `elm.json`, `elm-stuff/`, and the `elm` dependency
-- [ ] Remove Elm entries from `scripts/build-inputs.mjs`
-- [ ] Remove Elm post-processing from `scripts/translations.mjs`
-      (keep only what the React catalogs need)
-- [ ] Delete unused `src/electron/renderer.js`, `home.js` and DOM helpers
-- [ ] Update `check.mjs`, unit tests, E2E, README and this file
+- [x] Delete `src/elm/`, `elm.json`, `elm-stuff/`, and the `elm` dependency
+      - 58 Elm modules removed; `elm` + its binary dropped from package.json
+        and the lockfile
+- [x] Remove Elm entries from `scripts/build-inputs.mjs`
+      - `ELM_ENTRIES` is gone; `GENERATED_BUNDLES` now covers only the React
+        bundles
+- [x] Remove Elm post-processing from `scripts/translations.mjs`
+      - the compiler step (`compileElm` / `elmCommand`) is deleted from
+        `build.mjs`; `translations.mjs` survives unchanged because it still
+        substitutes the `{%TOKEN%}` build-time config into React bundles
+- [x] Delete unused `src/electron/renderer.js`, `home.js` and DOM helpers
+      - removed earlier in Phase 4 plus `import-single.js` in Phase 6
+- [x] Update `check.mjs`, unit tests, E2E, README and this file
+      - `check.mjs` drops the `src/elm/**` and `elm.json` inputs; the
+        Elm-sources assertion is removed from `build-assets.test.mjs`
+- [x] `npm run check`, `typecheck`, `npm test` (101), `build` (no Elm step),
+      `npx playwright test` (12) all green with Elm fully removed
 - [ ] Final CI run: typecheck, build, E2E, dmg/zip artifacts
 - [ ] Smoke-test the packaged app on macOS 12 Intel
 

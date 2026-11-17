@@ -1,10 +1,9 @@
 // Builds the application into ./app.
 //
 // Pipeline:
-//   1. compile each Elm entry point with `elm make --optimize`
-//   2. substitute translation placeholders in the generated bundles
-//   3. bundle renderer-side JS with esbuild (browser IIFE)
-//   4. copy main-process CJS files, preload scripts and static assets
+//   1. bundle renderer-side JS with esbuild (browser IIFE)
+//   2. substitute translation tokens in the generated bundles
+//   3. copy main-process CJS files, preload scripts and static assets
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -16,19 +15,10 @@ import {
   ROOT,
   APP,
   STATIC,
-  ELM_ENTRIES,
   MAIN_FILES,
   PRELOAD_FILES,
   RENDERER_ENTRIES
 } from "./build-inputs.mjs";
-
-function elmCommand() {
-  const bin = path.join(ROOT, "node_modules", ".bin", process.platform === "win32" ? "elm.cmd" : "elm");
-  if (!fs.existsSync(bin)) {
-    throw new Error("Elm compiler not found. Run `npm install` first.");
-  }
-  return bin;
-}
 
 function cleanApp() {
   fs.rmSync(APP, { recursive: true, force: true });
@@ -61,35 +51,6 @@ function copyMain() {
 
   // Runtime build-time config (support addresses etc.).
   fs.copyFileSync(path.join(ROOT, "config.js"), path.join(APP, "config.js"));
-}
-
-function compileElm() {
-  const elmBin = elmCommand();
-  const replacements = buildReplacements();
-  let total = 0;
-
-  for (const [input, output] of ELM_ENTRIES) {
-    const outPath = path.join(STATIC, output);
-    process.stdout.write(`\n[elm] ${input} -> ${output}\n`);
-    execFileSync(
-      elmBin,
-      ["make", input, `--output=${outPath}`, "--optimize"],
-      { cwd: ROOT, stdio: "inherit", shell: process.platform === "win32" }
-    );
-
-    const code = fs.readFileSync(outPath, "utf-8");
-    const translated = applyTranslations(code, replacements);
-    const missing = findUnreplaced(translated);
-    if (missing.length > 0) {
-      throw new Error(
-        `Unreplaced translation placeholders in ${output}: ${[...new Set(missing)].slice(0, 10).join(", ")}`
-      );
-    }
-    fs.writeFileSync(outPath, translated);
-    total += translated.length;
-  }
-
-  process.stdout.write(`\n[elm] ${ELM_ENTRIES.length} bundles, ${(total / 1024 / 1024).toFixed(2)} MiB\n`);
 }
 
 async function bundleRenderers() {
@@ -130,7 +91,6 @@ async function main() {
   cleanApp();
   copyStatic();
   copyMain();
-  compileElm();
   await bundleRenderers();
 
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf-8"));

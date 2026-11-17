@@ -33,7 +33,6 @@ for (const file of fs.readdirSync(htmlDir).filter((name) => name.endsWith(".html
 
 // 3. Build inputs referenced by the build script exist.
 for (const input of [
-  "src/elm/Electron/Home.elm",
   "src/renderer/home/main.tsx",
   "src/renderer/home/HomeApp.tsx",
   "src/renderer/shortcuts/main.tsx",
@@ -72,7 +71,6 @@ for (const input of [
   "src/static/style.css",
   "src/bin/mac/pandoc",
   "config.js",
-  "elm.json",
   "tsconfig.json"
 ]) {
   if (!fs.existsSync(path.join(ROOT, input))) fail(`missing build input ${input}`);

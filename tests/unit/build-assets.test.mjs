@@ -111,14 +111,3 @@ test("bundled pandoc is an Intel macOS binary", () => {
   assert.ok(fs.existsSync(pandoc));
   assert.ok(fs.statSync(pandoc).size > 10 * 1024 * 1024);
 });
-
-test("Elm sources needed by the desktop entries exist", () => {
-  for (const entry of [
-    "src/elm/Electron/Electron.elm",
-    "src/elm/Electron/Home.elm",
-    "src/elm/Electron/Worker.elm",
-    "src/elm/Page/Doc.elm"
-  ]) {
-    assert.ok(fs.existsSync(path.join(ROOT, entry)), `missing ${entry}`);
-  }
-});

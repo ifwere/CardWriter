@@ -23,7 +23,6 @@
     "@types/react-dom": "^19.0.0",
     "electron": "^32.0.0",
     "electron-builder": "^25.1.8",
-    "elm": "0.19.1-6",
     "esbuild": "^0.24.0",
     "gsap": "^3.12.5",
     "immer": "^10.0.0",
