@@ -5,6 +5,12 @@ import os from "node:os";
 
 const APP_ROOT = path.resolve(__dirname, "..", "..");
 
+// The app binds Mousetrap's `mod` key, which resolves to Command (Meta) on
+// macOS and Control elsewhere. The tests run on the same OS as the app, so we
+// send the matching physical modifier; a literal "Control+..." would only match
+// `ctrl` bindings and never fire on macOS CI.
+const MOD = process.platform === "darwin" ? "Meta" : "Control";
+
 let app: ElectronApplication;
 
 test.afterEach(async () => {
@@ -138,7 +144,7 @@ test("saving a card renders Markdown and shows the breadcrumb", async () => {
   const doc = await openNewDocument();
 
   await doc.locator("textarea").first().fill("# Heading\n\nSome **bold** text");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
 
   const card = doc.locator("#card-1");
   await expect(card).toHaveClass(/card active/);
@@ -154,8 +160,8 @@ test("inserting a child card creates a second column", async () => {
   const doc = await openNewDocument();
 
   await doc.locator("textarea").first().fill("Root");
-  await doc.keyboard.press("Control+Enter");
-  await doc.keyboard.press("Control+L");
+  await doc.keyboard.press(`${MOD}+Enter`);
+  await doc.keyboard.press(`${MOD}+L`);
 
   // A new empty card is opened for editing in the next column.
   await expect(doc.locator("#column-container .column")).toHaveCount(2);
@@ -163,7 +169,7 @@ test("inserting a child card creates a second column", async () => {
   await expect(child).toBeFocused();
 
   await child.fill("Child");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
   await expect(
     doc.locator("#column-container .column").nth(1).locator(".card .view")
   ).toHaveText("Child");
@@ -178,10 +184,10 @@ test("keyboard navigation moves the active card", async () => {
   const doc = await openNewDocument();
 
   await doc.locator("textarea").first().fill("Root");
-  await doc.keyboard.press("Control+Enter");
-  await doc.keyboard.press("Control+L");
+  await doc.keyboard.press(`${MOD}+Enter`);
+  await doc.keyboard.press(`${MOD}+L`);
   await doc.locator("textarea").first().fill("Child");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
 
   // The child is active; `ArrowLeft` goes back to the parent.
   await expect(doc.locator(".card.active .view")).toHaveText("Child");
@@ -208,7 +214,7 @@ test("the export menu previews and exports the document", async () => {
   });
 
   await doc.locator("textarea").first().fill("Exportable");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
 
   await app.evaluate(({ Menu, BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows()[0];
@@ -235,7 +241,7 @@ test("fullscreen editing replaces the columns", async () => {
   const doc = await openNewDocument();
 
   await doc.locator("textarea").first().fill("Fullscreen text");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
 
   await doc.keyboard.press("Shift+Enter");
   await expect(doc.locator("#app-fullscreen")).toBeVisible();
@@ -253,10 +259,10 @@ test("navigating a tall column scrolls it to keep the active card in view", asyn
 
   // Seed the first card, then build a tall column by inserting siblings.
   await doc.locator("textarea").first().fill("Seed");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
   for (let i = 0; i < 40; i++) {
-    await doc.keyboard.press("Control+j"); // insert below (opens editing)
-    await doc.keyboard.press("Control+Enter"); // save
+    await doc.keyboard.press(`${MOD}+j`); // insert below (opens editing)
+    await doc.keyboard.press(`${MOD}+Enter`); // save
   }
 
   const column = doc.locator("#column-container > .column").first();
@@ -285,13 +291,13 @@ test("the version-history slider lists commits and restores one", async () => {
 
   // Two commits: an initial empty one and one carrying card A.
   await doc.locator("textarea").first().fill("Wanted Old");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
   await doc.waitForTimeout(4500); // commit throttle (3 s) + margin
 
   // Add a second, newer commit.
-  await doc.keyboard.press("Control+j"); // insert below (editing)
+  await doc.keyboard.press(`${MOD}+j`); // insert below (editing)
   await doc.locator("textarea").first().fill("Newest Card");
-  await doc.keyboard.press("Control+Enter");
+  await doc.keyboard.press(`${MOD}+Enter`);
   await doc.waitForTimeout(4500);
 
   // Open the history menu. Its slider tracks the saved commits.
