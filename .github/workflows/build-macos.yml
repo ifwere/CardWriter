@@ -2,6 +2,8 @@ name: Build macOS (Intel)
 
 on:
   push:
+    tags:
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -9,6 +11,8 @@ jobs:
     # Intel (x86_64) macOS runner. The produced app targets macOS 12+.
     runs-on: macos-15-intel
     timeout-minutes: 60
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -18,14 +22,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-
-      - name: Cache Elm home
-        uses: actions/cache@v4
-        with:
-          path: ~/.elm
-          key: elm-${{ runner.os }}-${{ hashFiles('elm.json') }}
-          restore-keys: |
-            elm-${{ runner.os }}-
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -54,17 +50,19 @@ jobs:
           path: test-results
           if-no-files-found: ignore
 
-      # Unsigned, unnotarized x64 dmg + zip.
+      # Unsigned, unnotarized x64 dmg + zip. The package produces CardWriter.app.
       - name: Package for macOS
         run: npx electron-builder --mac --x64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      # Publish a Release holding both the .zip and .dmg of the tagged version.
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: CardWriter-macos-x64
-          path: |
+          files: |
             dist/*.dmg
             dist/*.zip
-          if-no-files-found: error
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
